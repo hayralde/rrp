@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prévia — Cronograma Parada Elétrica</title>
+<style>
+  .viz-root {
+    color-scheme: light;
+    --surface-1:      #fcfcfb;
+    --page-plane:     #f9f9f7;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --gridline:       #e1e0d9;
+    --baseline:       #c3c2b7;
+    --border:         rgba(11,11,11,0.10);
+    --series-1:       #2a78d6;
+    --series-2:       #eb6834;
+    --series-3:       #1baf7a;
+    --series-4:       #eda100;
+    --series-5:       #e87ba4;
+    --warn-bg:        #fff7e8;
+    --warn-border:    #eda100;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--page-plane);
+    color: var(--text-primary);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1440px; margin: 0 auto; padding: 28px 24px 64px; }
+  header.top { margin-bottom: 20px; }
+  header.top h1 { font-size: 22px; margin: 0 0 4px; }
+  header.top .sub { color: var(--text-secondary); font-size: 13.5px; }
+  .status-banner {
+    margin-top: 14px;
+    background: var(--warn-bg);
+    border: 1px solid var(--warn-border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--text-primary);
+  }
+  .stat-row { display: flex; gap: 12px; margin: 18px 0 20px; flex-wrap: wrap; }
+  .stat-tile {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    min-width: 150px;
+    flex: 1 1 150px;
+  }
+  .stat-tile .val { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .stat-tile .lbl { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+  .stat-tile.highlight { border-color: var(--series-1); background: color-mix(in oklab, var(--series-1) 6%, var(--surface-1)); }
+
+  .indicator-row { display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+  .indicator-row .panel { flex: 1 1 420px; margin-bottom: 0; }
+
+  .panel {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-bottom: 24px;
+  }
+  .panel h2 { font-size: 15px; margin: 0 0 4px; }
+  .panel .panel-sub { font-size: 12.5px; color: var(--text-secondary); margin-bottom: 16px; }
+  .legend { display: flex; gap: 16px; margin-bottom: 14px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-secondary); }
+  .legend-swatch { width: 10px; height: 10px; border-radius: 3px; }
+  .legend-swatch.folga { background: repeating-linear-gradient(45deg, var(--gridline), var(--gridline) 2px, var(--surface-1) 2px, var(--surface-1) 4px); border: 1px solid var(--baseline); }
+  .legend-swatch.point { background: color-mix(in oklab, var(--series-1) 32%, var(--surface-1)); border: 1.5px solid var(--series-1); }
+  .legend-swatch.free { background: var(--surface-1); border: 1px solid var(--gridline); }
+
+  .gantt { overflow-x: auto; }
+  .gantt-header {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    margin-bottom: 2px;
+  }
+  .gantt-header .spacer {}
+  .day-header-track {
+    display: grid;
+    grid-template-columns: repeat(18, minmax(30px, 1fr));
+    border-bottom: 1px solid var(--baseline);
+    padding-bottom: 4px;
+  }
+  .daycol { display: flex; flex-direction: column; align-items: center; font-size: 9.5px; color: var(--text-muted); }
+  .daycol .dow { text-transform: uppercase; letter-spacing: .02em; }
+  .daycol .dnum { font-variant-numeric: tabular-nums; color: var(--text-secondary); font-size: 10.5px; }
+  .daycol.sunday .dnum { color: var(--series-2); font-weight: 600; }
+
+  .gantt-row { display: grid; grid-template-columns: 220px 1fr; align-items: center; min-height: 30px; border-bottom: 1px solid var(--gridline); }
+  .gantt-row:last-child { border-bottom: none; }
+  .row-label { display: flex; flex-direction: column; padding-right: 12px; }
+  .row-name { font-size: 12.5px; font-weight: 600; }
+  .row-desc { font-size: 10.5px; color: var(--text-secondary); }
+  .row-track { display: grid; gap: 0; position: relative; height: 22px; }
+  .bar { height: 16px; align-self: center; border-radius: 4px; margin: 0 1px; }
+
+  .cal-track { height: 24px; }
+  .cal-cell {
+    height: 22px;
+    border-radius: 4px;
+    margin: 0 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: 700;
+  }
+  .cal-cell.folga {
+    background: repeating-linear-gradient(45deg, var(--gridline), var(--gridline) 2px, var(--surface-1) 2px, var(--surface-1) 4px);
+    border: 1px solid var(--baseline);
+    color: var(--text-muted);
+  }
+  .cal-cell.free { background: var(--surface-1); border: 1px solid var(--gridline); }
+
+  .filter-bar { display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--gridline); }
+  .filter-field { display: flex; flex-direction: column; gap: 4px; }
+  .filter-field label { font-size: 10.5px; text-transform: uppercase; letter-spacing: .02em; color: var(--text-muted); font-weight: 600; }
+  .filter-field select {
+    font-family: inherit; font-size: 12.5px; color: var(--text-primary);
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 6px;
+    padding: 6px 10px; min-width: 150px;
+  }
+  .filter-clear {
+    font-family: inherit; font-size: 12px; color: var(--text-secondary); background: none;
+    border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; cursor: pointer;
+  }
+  .filter-clear:hover { background: var(--gridline); }
+  .filter-count { font-size: 12px; color: var(--text-muted); margin-left: auto; align-self: center; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .02em; color: var(--text-muted); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--baseline); }
+  td { padding: 7px 8px; border-bottom: 1px solid var(--gridline); color: var(--text-primary); }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; color: var(--text-secondary); }
+  .chip { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: 10.5px; font-weight: 700; color: #fff; }
+
+  .warn-panel { background: var(--warn-bg); border-color: var(--warn-border); }
+  .warn-panel h3 { margin: 0 0 8px; font-size: 13.5px; }
+  .warn-panel ul { margin: 0; padding-left: 18px; font-size: 12.5px; }
+
+  .rank-row { display: grid; grid-template-columns: 90px 1fr 44px; align-items: center; gap: 8px; padding: 5px 0; }
+  .rank-name { font-size: 12px; font-weight: 600; }
+  .rank-bar-track { background: var(--gridline); border-radius: 4px; height: 12px; overflow: hidden; }
+  .rank-bar { height: 100%; border-radius: 4px; min-width: 3px; }
+  .rank-val { font-size: 12px; text-align: right; font-variant-numeric: tabular-nums; color: var(--text-secondary); }
+  .rank-note { font-size: 11.5px; color: var(--text-muted); margin-top: 10px; }
+
+  footer { font-size: 11.5px; color: var(--text-muted); margin-top: 20px; }
+</style>
+</head>
+<body>
+<div class="viz-root">
+<div class="wrap">
+  <header class="top">
+    <h1>Prévia — Cronograma Parada Elétrica</h1>
+    <div class="sub">Janela: 20/08 a 06/09/2026 · gerado em 19/08/2026 22:28 · área ELETRICA</div>
+    <div class="status-banner">📝 Rascunho parcial em construção — reflete só os lotes de atividades recebidos até agora. Datas/horários das atividades sem data definida foram alocados automaticamente respeitando folgas, turnos e 7h efetivas; vão se reorganizar conforme mais atividades chegarem.</div>
+  </header>
+
+  <div class="stat-row">
+    <div class="stat-tile"><div class="val">10</div><div class="lbl">responsabilidades de longa duração</div></div>
+    <div class="stat-tile"><div class="val">69</div><div class="lbl">tarefas pontuais recebidas</div></div>
+    <div class="stat-tile"><div class="val">278h</div><div class="lbl">horas pontuais já alocadas</div></div>
+    <div class="stat-tile highlight"><div class="val" style="font-size:16px;">Lucas</div><div class="lbl">mais atividades (18)</div></div>
+    <div class="stat-tile highlight"><div class="val" style="font-size:16px;">Jadson</div><div class="lbl">mais horas disponíveis (142h)</div></div>
+  </div>
+
+  
+
+  <div class="panel">
+    <h2>Calendário da equipe (folgas + atividades)</h2>
+    <div class="panel-sub">Uma linha por eletricista, agrupados por turno. Dias de folga aparecem hachurados com "F" — nesses dias ninguém pode receber programação.</div>
+    <div class="legend">
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--series-1)"></span>Turno A (Vanderley)</div>
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--series-2)"></span>Turno B (Carlos)</div>
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--series-3)"></span>Turno C (Leandro)</div>
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--series-5)"></span>Turno único 07:00–19:00 (demais)</div>
+      <div class="legend-item"><span class="legend-swatch folga"></span>Folga</div>
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--series-1)"></span>Responsabilidade de longa duração (dia inteiro)</div>
+      <div class="legend-item"><span class="legend-swatch point"></span>Tarefa pontual no dia</div>
+      <div class="legend-item"><span class="legend-swatch free"></span>Livre / disponível</div>
+    </div>
+    <div class="gantt">
+      <div style="min-width: 760px;">
+        <div class="gantt-header">
+          <div class="spacer"></div>
+          <div class="day-header-track">
+            <div class="daycol"><span class="dow">qui</span><span class="dnum">20/08</span></div><div class="daycol"><span class="dow">sex</span><span class="dnum">21/08</span></div><div class="daycol"><span class="dow">sáb</span><span class="dnum">22/08</span></div><div class="daycol sunday"><span class="dow">dom</span><span class="dnum">23/08</span></div><div class="daycol"><span class="dow">seg</span><span class="dnum">24/08</span></div><div class="daycol"><span class="dow">ter</span><span class="dnum">25/08</span></div><div class="daycol"><span class="dow">qua</span><span class="dnum">26/08</span></div><div class="daycol"><span class="dow">qui</span><span class="dnum">27/08</span></div><div class="daycol"><span class="dow">sex</span><span class="dnum">28/08</span></div><div class="daycol"><span class="dow">sáb</span><span class="dnum">29/08</span></div><div class="daycol sunday"><span class="dow">dom</span><span class="dnum">30/08</span></div><div class="daycol"><span class="dow">seg</span><span class="dnum">31/08</span></div><div class="daycol"><span class="dow">ter</span><span class="dnum">01/09</span></div><div class="daycol"><span class="dow">qua</span><span class="dnum">02/09</span></div><div class="daycol"><span class="dow">qui</span><span class="dnum">03/09</span></div><div class="daycol"><span class="dow">sex</span><span class="dnum">04/09</span></div><div class="daycol"><span class="dow">sáb</span><span class="dnum">05/09</span></div><div class="daycol sunday"><span class="dow">dom</span><span class="dnum">06/09</span></div>
+          </div>
+        </div>
+        
+    <div class="gantt-row">
+      <div class="row-label">
+        <span class="row-name">Vanderley</span>
+        <span class="row-desc">Turno A (07:00–15:00) — cobertura contínua</span>
+      </div>
+      <div class="row-track cal-track" style="grid-template-columns: repeat(18, 1fr);">
+        <div class="cal-cell block" style="background:var(--series-1);" title="Vanderley — Atender o turno A"></div><div class="cal-cell block" style="background:var(--series-1);" title="Vanderley — Atender o turno A"></div><div class="cal-cell block" style="background:var(--series-1);" title="Vanderley — Atender o turno A"></div><div class="cal-cell block" style="background:var(--series-1);" title="Vanderley — Atender o turno A"></div><div class="cal-cell block" style="background:var(--series-1);" title="Vanderley — Atender o turno A"></div><div class="cal-cell folga" title="Vanderley — Folga">F</div><div class="cal-cell block" style="background:var(--series-1);" title="Vanderley — Atender o turno A"></div><div class="cal-cell block" style="background:var(--series-1);" title="Vanderley — Atender o turno A"></div><div class="cal-cell block" style="background:var(--series-1);" title="Vanderley — Atender o turno A"></div><div class="cal-cell block" style="background:var(--series-1);" title="Vanderley — Atender o turno A"></div><div class="cal-cell block" style="background:var(--series-1);" title="Vanderley — Atender o turno A"></div><div class="cal-cell folga" title="Vanderley — Folga">F</div><div class="cal-cell block" style="background:var(--series-1);" title="Vanderley — Atender o turno A"></div><div class="cal-cell block" style="background:var(--series-1);" title="Vanderley — Atender o turno A"></div><div class="cal-cell block" style="background:var(--series-1);" title="Vanderley — Atender o turno A"></div><div class="cal-cell block" style="background:var(--series-1);" title="Vanderley — Atender o turno A"></div><div class="cal-cell block" style="background:var(--series-1);" title="Vanderley — Atender o turno A"></div><div class="cal-cell folga" title="Vanderley — Folga">F</div>
+      </div>
+    </div>
+    <div class="gantt-row">
+      <div class="row-label">
+        <span class="row-name">Carlos</span>
+        <span class="row-desc">Turno B (15:00–23:00) — cobertura contínua</span>
+      </div>
+      <div class="row-track cal-track" style="grid-template-columns: repeat(18, 1fr);">
+        <div class="cal-cell folga" title="Carlos — Folga">F</div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno B"></div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno B"></div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno B"></div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno B"></div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno B"></div><div class="cal-cell folga" title="Carlos — Folga">F</div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno B"></div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno B"></div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno B"></div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno B"></div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno B"></div><div class="cal-cell folga" title="Carlos — Folga">F</div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno B"></div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno B"></div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno B"></div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno B"></div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno B"></div>
+      </div>
+    </div>
+    <div class="gantt-row">
+      <div class="row-label">
+        <span class="row-name">Leandro</span>
+        <span class="row-desc">Turno C (23:00–07:00) — cobertura contínua</span>
+      </div>
+      <div class="row-track cal-track" style="grid-template-columns: repeat(18, 1fr);">
+        <div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno C"></div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno C"></div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno C"></div><div class="cal-cell folga" title="Leandro — Folga">F</div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno C"></div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno C"></div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno C"></div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno C"></div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno C"></div><div class="cal-cell folga" title="Leandro — Folga">F</div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno C"></div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno C"></div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno C"></div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno C"></div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno C"></div><div class="cal-cell folga" title="Leandro — Folga">F</div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno C"></div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno C"></div>
+      </div>
+    </div>
+    <div class="gantt-row">
+      <div class="row-label">
+        <span class="row-name">Adriel</span>
+        <span class="row-desc">Turno único (07:00–19:00)</span>
+      </div>
+      <div class="row-track cal-track" style="grid-template-columns: repeat(18, 1fr);">
+        <div class="cal-cell point" style="background:color-mix(in oklab, var(--series-5) 32%, var(--surface-1)); border:1.5px solid var(--series-5);" title="Adriel — Calibração da balança de fluxo (2.0h), Revisão da balança de fluxo, substituir borracha furada (2.0h), Revisão da balança de fluxo, reinstalar proteção do pistão que foi retirado (1.0h), Inspecionar a caixa de ligação e fazer reaperto nos motores (25 motores) (parte 1/2) (6.0h)"></div><div class="cal-cell point" style="background:color-mix(in oklab, var(--series-5) 32%, var(--surface-1)); border:1.5px solid var(--series-5);" title="Adriel — Inspecionar a caixa de ligação e fazer reaperto nos motores (25 motores) (parte 2/2) (5.0h), Inspecionar instrumentação, limpeza, calibração, ajuste e aferição (parte 1/4) (6.0h)"></div><div class="cal-cell folga" title="Adriel — Folga">F</div><div class="cal-cell point" style="background:color-mix(in oklab, var(--series-5) 32%, var(--surface-1)); border:1.5px solid var(--series-5);" title="Adriel — Inspecionar instrumentação, limpeza, calibração, ajuste e aferição (parte 2/4) (11.0h)"></div><div class="cal-cell point" style="background:color-mix(in oklab, var(--series-5) 32%, var(--surface-1)); border:1.5px solid var(--series-5);" title="Adriel — Inspecionar instrumentação, limpeza, calibração, ajuste e aferição (parte 3/4) (11.0h)"></div><div class="cal-cell point" style="background:color-mix(in oklab, var(--series-5) 32%, var(--surface-1)); border:1.5px solid var(--series-5);" title="Adriel — Inspecionar instrumentação, limpeza, calibração, ajuste e aferição (parte 4/4) (5.0h)"></div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell folga" title="Adriel — Folga">F</div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell folga" title="Adriel — Folga">F</div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell free"></div>
+      </div>
+    </div>
+    <div class="gantt-row">
+      <div class="row-label">
+        <span class="row-name">Marcio</span>
+        <span class="row-desc">Turno único (07:00–19:00)</span>
+      </div>
+      <div class="row-track cal-track" style="grid-template-columns: repeat(18, 1fr);">
+        <div class="cal-cell block" style="background:var(--series-5);" title="Marcio — Acompanhar empresa CDM Gesso + Acompanhar empresa MPR (Inversores CCM)"></div><div class="cal-cell block" style="background:var(--series-5);" title="Marcio — Acompanhar empresa CDM Gesso + Acompanhar empresa MPR (Inversores CCM)"></div><div class="cal-cell block" style="background:var(--series-5);" title="Marcio — Acompanhar empresa CDM Gesso + Acompanhar empresa MPR (Inversores CCM)"></div><div class="cal-cell folga" title="Marcio — Folga">F</div><div class="cal-cell block" style="background:var(--series-5);" title="Marcio — Acompanhar empresa CDM Gesso + Acompanhar empresa MPR (Inversores CCM)"></div><div class="cal-cell block" style="background:var(--series-5);" title="Marcio — Acompanhar empresa CDM Gesso + Acompanhar empresa MPR (Inversores CCM)"></div><div class="cal-cell block" style="background:var(--series-5);" title="Marcio — Acompanhar empresa CDM Gesso"></div><div class="cal-cell block" style="background:var(--series-5);" title="Marcio — Acompanhar empresa CDM Gesso"></div><div class="cal-cell block" style="background:var(--series-5);" title="Marcio — Acompanhar empresa CDM Gesso"></div><div class="cal-cell folga" title="Marcio — Folga">F</div><div class="cal-cell block" style="background:var(--series-5);" title="Marcio — Acompanhar empresa CDM Gesso"></div><div class="cal-cell block" style="background:var(--series-5);" title="Marcio — Acompanhar empresa CDM Gesso"></div><div class="cal-cell block" style="background:var(--series-5);" title="Marcio — Acompanhar empresa CDM Gesso"></div><div class="cal-cell block" style="background:var(--series-5);" title="Marcio — Acompanhar empresa CDM Gesso"></div><div class="cal-cell block" style="background:var(--series-5);" title="Marcio — Acompanhar empresa CDM Gesso"></div><div class="cal-cell folga" title="Marcio — Folga">F</div><div class="cal-cell block" style="background:var(--series-5);" title="Marcio — Acompanhar empresa CDM Gesso"></div><div class="cal-cell block" style="background:var(--series-5);" title="Marcio — Acompanhar empresa CDM Gesso"></div>
+      </div>
+    </div>
+    <div class="gantt-row">
+      <div class="row-label">
+        <span class="row-name">Lucas</span>
+        <span class="row-desc">Turno único (07:00–19:00)</span>
+      </div>
+      <div class="row-track cal-track" style="grid-template-columns: repeat(18, 1fr);">
+        <div class="cal-cell point" style="background:color-mix(in oklab, var(--series-5) 32%, var(--surface-1)); border:1.5px solid var(--series-5);" title="Lucas — FIT-01 - Alfa Milase, retirar do local para calibração (1h), FIT-02 - Gluco, retirar do local para calibração (1h), FIT-03 - Alfa, retirar do local para calibração (1h), Retirar do local para calibração (1h), Retirar do local para calibração, precisa montar andaime (3h)"></div><div class="cal-cell folga" title="Lucas — Folga">F</div><div class="cal-cell point" style="background:color-mix(in oklab, var(--series-5) 32%, var(--surface-1)); border:1.5px solid var(--series-5);" title="Lucas — Mosto - retirar do local para calibração, precisa montar andaime (2h), Água bruta - retirar do local para calibração (1h), Slurry - retirar do local para calibração, precisa montar andaime (2h), Uréia para propagação - retirar do local para calibração, precisa montar andaime (2h), Uréia para dorna - retirar do local para calibração, precisa montar andaime (2h)"></div><div class="cal-cell point" style="background:color-mix(in oklab, var(--series-5) 32%, var(--surface-1)); border:1.5px solid var(--series-5);" title="Lucas — Vazão etanol hidratado - FIT-03, retirar do local para calibração (2h), INPM CLRE - DIT-502, retirar do local para calibração (2h), INPM hidratado - DIT-101, retirar do local para calibração (2h), INPM anidro - DIT-501, retirar do local para calibração (2h), Alimentação CLRE - FIT-503, retirar do local para calibração (2h)"></div><div class="cal-cell block" style="background:var(--series-5);" title="Lucas — Acompanhar empresa NDR Calibração Vazão"></div><div class="cal-cell block" style="background:var(--series-5);" title="Lucas — Acompanhar empresa NDR Calibração Vazão"></div><div class="cal-cell block" style="background:var(--series-5);" title="Lucas — Acompanhar empresa NDR Calibração Vazão"></div><div class="cal-cell folga" title="Lucas — Folga">F</div><div class="cal-cell block" style="background:var(--series-5);" title="Lucas — Acompanhar empresa NDR Calibração Vazão"></div><div class="cal-cell block" style="background:var(--series-5);" title="Lucas — Acompanhar empresa NDR Calibração Vazão"></div><div class="cal-cell block" style="background:var(--series-5);" title="Lucas — Acompanhar empresa NDR Calibração Vazão"></div><div class="cal-cell point" style="background:color-mix(in oklab, var(--series-5) 32%, var(--surface-1)); border:1.5px solid var(--series-5);" title="Lucas — Comissionar os sensores de vibração e temperatura do decanter, para que no término da parada já volte em funcionamento (8h)"></div><div class="cal-cell free"></div><div class="cal-cell folga" title="Lucas — Folga">F</div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell point" style="background:color-mix(in oklab, var(--series-5) 32%, var(--surface-1)); border:1.5px solid var(--series-5);" title="Lucas — Instalação borne fusível remota Dujua, substituir comum por fusível (6h)"></div>
+      </div>
+    </div>
+    <div class="gantt-row">
+      <div class="row-label">
+        <span class="row-name">Edson</span>
+        <span class="row-desc">Turno único (07:00–19:00)</span>
+      </div>
+      <div class="row-track cal-track" style="grid-template-columns: repeat(18, 1fr);">
+        <div class="cal-cell point" style="background:color-mix(in oklab, var(--series-5) 32%, var(--surface-1)); border:1.5px solid var(--series-5);" title="Edson — Substituir 2 disjuntores de ar condicionado que sofreram aquecimento (2h), Instalar 2 disjuntores de 2 ar condicionados que estão faltando (2h), Trocar disjuntor de alimentação do compressor de ar comprimido (2h), Inspecionar a caixa de ligação e fazer reaperto nos motores (6 motores) (4h)"></div><div class="cal-cell point" style="background:color-mix(in oklab, var(--series-5) 32%, var(--surface-1)); border:1.5px solid var(--series-5);" title="Edson — Inspecionar a caixa de ligação e fazer reaperto nos motores (15 motores) (11h)"></div><div class="cal-cell folga" title="Edson — Folga">F</div><div class="cal-cell point" style="background:color-mix(in oklab, var(--series-5) 32%, var(--surface-1)); border:1.5px solid var(--series-5);" title="Edson — Inspecionar a caixa de ligação e fazer reaperto nos motores (22 motores) (11h)"></div><div class="cal-cell point" style="background:color-mix(in oklab, var(--series-5) 32%, var(--surface-1)); border:1.5px solid var(--series-5);" title="Edson — Inspecionar a caixa de ligação e fazer reaperto nos motores (6 motores) (4h), Inspecionar a caixa de ligação e fazer reaperto nos motores (6 motores) (4h)"></div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell folga" title="Edson — Folga">F</div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell folga" title="Edson — Folga">F</div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell free"></div>
+      </div>
+    </div>
+    <div class="gantt-row">
+      <div class="row-label">
+        <span class="row-name">Nibson</span>
+        <span class="row-desc">Turno único (07:00–19:00)</span>
+      </div>
+      <div class="row-track cal-track" style="grid-template-columns: repeat(18, 1fr);">
+        <div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell folga" title="Nibson — Folga">F</div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell block" style="background:var(--series-5);" title="Nibson — Atender demandas da TGM"></div><div class="cal-cell block" style="background:var(--series-5);" title="Nibson — Atender demandas da TGM"></div><div class="cal-cell folga" title="Nibson — Folga">F</div><div class="cal-cell block" style="background:var(--series-5);" title="Nibson — Atender demandas da TGM"></div><div class="cal-cell block" style="background:var(--series-5);" title="Nibson — Atender demandas da TGM"></div><div class="cal-cell block" style="background:var(--series-5);" title="Nibson — Atender demandas da TGM"></div><div class="cal-cell block" style="background:var(--series-5);" title="Nibson — Atender demandas da TGM"></div><div class="cal-cell block" style="background:var(--series-5);" title="Nibson — Atender demandas da TGM"></div><div class="cal-cell folga" title="Nibson — Folga">F</div><div class="cal-cell block" style="background:var(--series-5);" title="Nibson — Atender demandas da TGM"></div><div class="cal-cell free"></div>
+      </div>
+    </div>
+    <div class="gantt-row">
+      <div class="row-label">
+        <span class="row-name">Dionatan</span>
+        <span class="row-desc">Turno único (07:00–19:00)</span>
+      </div>
+      <div class="row-track cal-track" style="grid-template-columns: repeat(18, 1fr);">
+        <div class="cal-cell point" style="background:color-mix(in oklab, var(--series-5) 32%, var(--surface-1)); border:1.5px solid var(--series-5);" title="Dionatan — Inspecionar a caixa de ligação e fazer reaperto nos motores (50 motores) (parte 1/3) (11.0h)"></div><div class="cal-cell point" style="background:color-mix(in oklab, var(--series-5) 32%, var(--surface-1)); border:1.5px solid var(--series-5);" title="Dionatan — Inspecionar a caixa de ligação e fazer reaperto nos motores (50 motores) (parte 2/3) (11.0h)"></div><div class="cal-cell point" style="background:color-mix(in oklab, var(--series-5) 32%, var(--surface-1)); border:1.5px solid var(--series-5);" title="Dionatan — Inspecionar a caixa de ligação e fazer reaperto nos motores (50 motores) (parte 3/3) (11.0h)"></div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell folga" title="Dionatan — Folga">F</div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell folga" title="Dionatan — Folga">F</div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell folga" title="Dionatan — Folga">F</div>
+      </div>
+    </div>
+    <div class="gantt-row">
+      <div class="row-label">
+        <span class="row-name">Jadson</span>
+        <span class="row-desc">Turno único (07:00–19:00)</span>
+      </div>
+      <div class="row-track cal-track" style="grid-template-columns: repeat(18, 1fr);">
+        <div class="cal-cell folga" title="Jadson — Folga">F</div><div class="cal-cell point" style="background:color-mix(in oklab, var(--series-5) 32%, var(--surface-1)); border:1.5px solid var(--series-5);" title="Jadson — Girar a caixa de ligação dos motores dos rolos dos moinhos (6h)"></div><div class="cal-cell point" style="background:color-mix(in oklab, var(--series-5) 32%, var(--surface-1)); border:1.5px solid var(--series-5);" title="Jadson — Inspecionar a caixa de ligação e fazer reaperto nos motores (26 motores) (11h)"></div><div class="cal-cell point" style="background:color-mix(in oklab, var(--series-5) 32%, var(--surface-1)); border:1.5px solid var(--series-5);" title="Jadson — Inspecionar a caixa de ligação e fazer reaperto nos motores (10 motores) (6h)"></div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell folga" title="Jadson — Folga">F</div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell folga" title="Jadson — Folga">F</div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell free"></div>
+      </div>
+    </div>
+    <div class="gantt-row">
+      <div class="row-label">
+        <span class="row-name">Valter</span>
+        <span class="row-desc">Turno único (07:00–19:00)</span>
+      </div>
+      <div class="row-track cal-track" style="grid-template-columns: repeat(18, 1fr);">
+        <div class="cal-cell point" style="background:color-mix(in oklab, var(--series-5) 32%, var(--surface-1)); border:1.5px solid var(--series-5);" title="Valter — FIT-01 - Alfa Milase, retirar do local para calibração (1h), FIT-02 - Gluco, retirar do local para calibração (1h), FIT-03 - Alfa, retirar do local para calibração (1h), Retirar do local para calibração (1h), Retirar do local para calibração, precisa montar andaime (3h)"></div><div class="cal-cell point" style="background:color-mix(in oklab, var(--series-5) 32%, var(--surface-1)); border:1.5px solid var(--series-5);" title="Valter — Limpeza interna transmissor vazão fábrica óleo (Coriolis), desmontar/retirar da linha (3h)"></div><div class="cal-cell point" style="background:color-mix(in oklab, var(--series-5) 32%, var(--surface-1)); border:1.5px solid var(--series-5);" title="Valter — Mosto - retirar do local para calibração, precisa montar andaime (2h), Água bruta - retirar do local para calibração (1h), Slurry - retirar do local para calibração, precisa montar andaime (2h), Uréia para propagação - retirar do local para calibração, precisa montar andaime (2h), Uréia para dorna - retirar do local para calibração, precisa montar andaime (2h)"></div><div class="cal-cell point" style="background:color-mix(in oklab, var(--series-5) 32%, var(--surface-1)); border:1.5px solid var(--series-5);" title="Valter — Vazão etanol hidratado - FIT-03, retirar do local para calibração (2h), INPM CLRE - DIT-502, retirar do local para calibração (2h), INPM hidratado - DIT-101, retirar do local para calibração (2h), INPM anidro - DIT-501, retirar do local para calibração (2h), Alimentação CLRE - FIT-503, retirar do local para calibração (2h)"></div><div class="cal-cell folga" title="Valter — Folga">F</div><div class="cal-cell block" style="background:var(--series-5);" title="Valter — Acompanhar empresa NDR Calibração Vazão"></div><div class="cal-cell block" style="background:var(--series-5);" title="Valter — Acompanhar empresa NDR Calibração Vazão"></div><div class="cal-cell block" style="background:var(--series-5);" title="Valter — Acompanhar empresa NDR Calibração Vazão"></div><div class="cal-cell block" style="background:var(--series-5);" title="Valter — Acompanhar empresa NDR Calibração Vazão"></div><div class="cal-cell block" style="background:var(--series-5);" title="Valter — Acompanhar empresa NDR Calibração Vazão"></div><div class="cal-cell folga" title="Valter — Folga">F</div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell folga" title="Valter — Folga">F</div><div class="cal-cell free"></div>
+      </div>
+    </div>
+    <div class="gantt-row">
+      <div class="row-label">
+        <span class="row-name">Gianny</span>
+        <span class="row-desc">Turno único (07:00–19:00)</span>
+      </div>
+      <div class="row-track cal-track" style="grid-template-columns: repeat(18, 1fr);">
+        <div class="cal-cell point" style="background:color-mix(in oklab, var(--series-5) 32%, var(--surface-1)); border:1.5px solid var(--series-5);" title="Gianny — Apoiar a integração da nova caldeira ao sistema atual (parte 1/2) (11.0h)"></div><div class="cal-cell point" style="background:color-mix(in oklab, var(--series-5) 32%, var(--surface-1)); border:1.5px solid var(--series-5);" title="Gianny — Apoiar a integração da nova caldeira ao sistema atual (parte 2/2) (1.0h), Atualizar todos os backups e relógios dos PLC (2.0h), Retirada de soft start Siemens SIRIUS (painel Topgren DDG), enviar para reparo externo (2.0h), Limpeza de cartões eletrônicos dos PLC (parte 1/2) (6.0h)"></div><div class="cal-cell point" style="background:color-mix(in oklab, var(--series-5) 32%, var(--surface-1)); border:1.5px solid var(--series-5);" title="Gianny — Limpeza de cartões eletrônicos dos PLC (parte 2/2) (5.0h), Reaperto dos bornes de distribuição dos CCM dos PLC (parte 1/3) (6.0h)"></div><div class="cal-cell folga" title="Gianny — Folga">F</div><div class="cal-cell point" style="background:color-mix(in oklab, var(--series-5) 32%, var(--surface-1)); border:1.5px solid var(--series-5);" title="Gianny — Reaperto dos bornes de distribuição dos CCM dos PLC (parte 2/3) (11.0h)"></div><div class="cal-cell point" style="background:color-mix(in oklab, var(--series-5) 32%, var(--surface-1)); border:1.5px solid var(--series-5);" title="Gianny — Reaperto dos bornes de distribuição dos CCM dos PLC (parte 3/3) (5.0h), Implantar rotina com AVEVA para buscar BRIX e densidade e calcular automaticamente dosagens de uréia e glucoamilase (melhoria de processo) (2.0h), Inventário da rede e levantamento da topologia lógica e física (PRONETA e Wireshark) (parte 1/2) (4.0h)"></div><div class="cal-cell point" style="background:color-mix(in oklab, var(--series-5) 32%, var(--surface-1)); border:1.5px solid var(--series-5);" title="Gianny — Inventário da rede e levantamento da topologia lógica e física (PRONETA e Wireshark) (parte 2/2) (1.0h)"></div><div class="cal-cell free"></div><div class="cal-cell block" style="background:var(--series-5);" title="Gianny — Acompanhar empresa TechEnerg"></div><div class="cal-cell block" style="background:var(--series-5);" title="Gianny — Acompanhar empresa TechEnerg"></div><div class="cal-cell folga" title="Gianny — Folga">F</div><div class="cal-cell point" style="background:color-mix(in oklab, var(--series-5) 32%, var(--surface-1)); border:1.5px solid var(--series-5);" title="Gianny — Comissionar os sensores de vibração e temperatura do decanter, para que no término da parada já volte em funcionamento (8h)"></div><div class="cal-cell block" style="background:var(--series-5);" title="Gianny — Acompanhar empresa TechEnerg"></div><div class="cal-cell block" style="background:var(--series-5);" title="Gianny — Acompanhar empresa TechEnerg"></div><div class="cal-cell block" style="background:var(--series-5);" title="Gianny — Acompanhar empresa TechEnerg"></div><div class="cal-cell block" style="background:var(--series-5);" title="Gianny — Acompanhar empresa TechEnerg"></div><div class="cal-cell block" style="background:var(--series-5);" title="Gianny — Acompanhar empresa TechEnerg"></div><div class="cal-cell folga" title="Gianny — Folga">F</div>
+      </div>
+    </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="indicator-row">
+    <div class="panel">
+      <h2>Quem tem mais atividades</h2>
+      <div class="panel-sub">Número de atividades atribuídas (pontuais + responsabilidades de longa duração), por pessoa.</div>
+      
+        <div class="rank-row">
+          <div class="rank-name">Lucas</div>
+          <div class="rank-bar-track"><div class="rank-bar" style="width:100%; background:var(--series-5);"></div></div>
+          <div class="rank-val">18</div>
+        </div>
+        <div class="rank-row">
+          <div class="rank-name">Valter</div>
+          <div class="rank-bar-track"><div class="rank-bar" style="width:94%; background:var(--series-5);"></div></div>
+          <div class="rank-val">17</div>
+        </div>
+        <div class="rank-row">
+          <div class="rank-name">Gianny</div>
+          <div class="rank-bar-track"><div class="rank-bar" style="width:83%; background:var(--series-5);"></div></div>
+          <div class="rank-val">15</div>
+        </div>
+        <div class="rank-row">
+          <div class="rank-name">Adriel</div>
+          <div class="rank-bar-track"><div class="rank-bar" style="width:50%; background:var(--series-5);"></div></div>
+          <div class="rank-val">9</div>
+        </div>
+        <div class="rank-row">
+          <div class="rank-name">Edson</div>
+          <div class="rank-bar-track"><div class="rank-bar" style="width:44%; background:var(--series-5);"></div></div>
+          <div class="rank-val">8</div>
+        </div>
+        <div class="rank-row">
+          <div class="rank-name">Dionatan</div>
+          <div class="rank-bar-track"><div class="rank-bar" style="width:17%; background:var(--series-5);"></div></div>
+          <div class="rank-val">3</div>
+        </div>
+        <div class="rank-row">
+          <div class="rank-name">Jadson</div>
+          <div class="rank-bar-track"><div class="rank-bar" style="width:17%; background:var(--series-5);"></div></div>
+          <div class="rank-val">3</div>
+        </div>
+        <div class="rank-row">
+          <div class="rank-name">Marcio</div>
+          <div class="rank-bar-track"><div class="rank-bar" style="width:11%; background:var(--series-5);"></div></div>
+          <div class="rank-val">2</div>
+        </div>
+        <div class="rank-row">
+          <div class="rank-name">Vanderley</div>
+          <div class="rank-bar-track"><div class="rank-bar" style="width:6%; background:var(--series-1);"></div></div>
+          <div class="rank-val">1</div>
+        </div>
+        <div class="rank-row">
+          <div class="rank-name">Carlos</div>
+          <div class="rank-bar-track"><div class="rank-bar" style="width:6%; background:var(--series-2);"></div></div>
+          <div class="rank-val">1</div>
+        </div>
+        <div class="rank-row">
+          <div class="rank-name">Nibson</div>
+          <div class="rank-bar-track"><div class="rank-bar" style="width:6%; background:var(--series-5);"></div></div>
+          <div class="rank-val">1</div>
+        </div>
+        <div class="rank-row">
+          <div class="rank-name">Leandro</div>
+          <div class="rank-bar-track"><div class="rank-bar" style="width:6%; background:var(--series-3);"></div></div>
+          <div class="rank-val">1</div>
+        </div>
+    </div>
+    <div class="panel">
+      <h2>Quem tem mais horas disponíveis para programar</h2>
+      <div class="panel-sub">Capacidade efetiva na janela (horas do turno de cada um × dias sem folga) menos o que já foi programado. Vanderley/Carlos/Leandro seguem em 7h/dia (turno A/B/C); os demais em 11h/dia (turno único 07:00–19:00).</div>
+      
+        <div class="rank-row">
+          <div class="rank-name">Jadson</div>
+          <div class="rank-bar-track"><div class="rank-bar" style="width:100%; background:var(--series-5);"></div></div>
+          <div class="rank-val">142h</div>
+        </div>
+        <div class="rank-row">
+          <div class="rank-name">Dionatan</div>
+          <div class="rank-bar-track"><div class="rank-bar" style="width:93%; background:var(--series-5);"></div></div>
+          <div class="rank-val">132h</div>
+        </div>
+        <div class="rank-row">
+          <div class="rank-name">Edson</div>
+          <div class="rank-bar-track"><div class="rank-bar" style="width:88%; background:var(--series-5);"></div></div>
+          <div class="rank-val">125h</div>
+        </div>
+        <div class="rank-row">
+          <div class="rank-name">Adriel</div>
+          <div class="rank-bar-track"><div class="rank-bar" style="width:82%; background:var(--series-5);"></div></div>
+          <div class="rank-val">116h</div>
+        </div>
+        <div class="rank-row">
+          <div class="rank-name">Valter</div>
+          <div class="rank-bar-track"><div class="rank-bar" style="width:57%; background:var(--series-5);"></div></div>
+          <div class="rank-val">81h</div>
+        </div>
+        <div class="rank-row">
+          <div class="rank-name">Nibson</div>
+          <div class="rank-bar-track"><div class="rank-bar" style="width:54%; background:var(--series-5);"></div></div>
+          <div class="rank-val">77h</div>
+        </div>
+        <div class="rank-row">
+          <div class="rank-name">Lucas</div>
+          <div class="rank-bar-track"><div class="rank-bar" style="width:42%; background:var(--series-5);"></div></div>
+          <div class="rank-val">59h</div>
+        </div>
+        <div class="rank-row">
+          <div class="rank-name">Gianny</div>
+          <div class="rank-bar-track"><div class="rank-bar" style="width:17%; background:var(--series-5);"></div></div>
+          <div class="rank-val">24h</div>
+        </div>
+        <div class="rank-row">
+          <div class="rank-name">Marcio</div>
+          <div class="rank-bar-track"><div class="rank-bar" style="width:0%; background:var(--series-5);"></div></div>
+          <div class="rank-val">0h</div>
+        </div>
+        <div class="rank-row">
+          <div class="rank-name">Vanderley</div>
+          <div class="rank-bar-track"><div class="rank-bar" style="width:0%; background:var(--series-1);"></div></div>
+          <div class="rank-val">0h</div>
+        </div>
+        <div class="rank-row">
+          <div class="rank-name">Carlos</div>
+          <div class="rank-bar-track"><div class="rank-bar" style="width:0%; background:var(--series-2);"></div></div>
+          <div class="rank-val">0h</div>
+        </div>
+        <div class="rank-row">
+          <div class="rank-name">Leandro</div>
+          <div class="rank-bar-track"><div class="rank-bar" style="width:0%; background:var(--series-3);"></div></div>
+          <div class="rank-val">0h</div>
+        </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Tarefas pontuais já recebidas (por OS/atividade)</h2>
+    <div class="panel-sub">Alocação automática (sem data pedida pelo usuário) — ordenadas por início. A coluna Turno usa a mesma cor do calendário acima.</div>
+    <div class="filter-bar">
+      <div class="filter-field">
+        <label for="f-date">Data</label>
+        <select id="f-date" onchange="applyPtFilters()">
+          <option value="">Todas</option>
+          <option value="2026-08-20">20/08</option><option value="2026-08-21">21/08</option><option value="2026-08-22">22/08</option><option value="2026-08-23">23/08</option><option value="2026-08-24">24/08</option><option value="2026-08-25">25/08</option><option value="2026-08-26">26/08</option><option value="2026-08-31">31/08</option><option value="2026-09-06">06/09</option>
+        </select>
+      </div>
+      <div class="filter-field">
+        <label for="f-setor">Setor</label>
+        <select id="f-setor" onchange="applyPtFilters()">
+          <option value="">Todos</option>
+          <option value="Caldeira">Caldeira</option><option value="Destilaria">Destilaria</option><option value="Evaporacao">Evaporacao</option><option value="Fabrica De Oleo">Fabrica De Oleo</option><option value="Fermentação">Fermentação</option><option value="Liquefacao">Liquefacao</option><option value="Moagem">Moagem</option><option value="Quimicos">Quimicos</option><option value="Secagem">Secagem</option><option value="Toda Fabrica">Toda Fabrica</option><option value="Torres">Torres</option>
+        </select>
+      </div>
+      <div class="filter-field">
+        <label for="f-resp">Responsável</label>
+        <select id="f-resp" onchange="applyPtFilters()">
+          <option value="">Todos</option>
+          <option value="Adriel">Adriel</option><option value="Dionatan">Dionatan</option><option value="Edson">Edson</option><option value="Gianny">Gianny</option><option value="Jadson">Jadson</option><option value="Lucas">Lucas</option><option value="Valter">Valter</option>
+        </select>
+      </div>
+      <button type="button" class="filter-clear" onclick="clearPtFilters()">Limpar filtros</button>
+      <div class="filter-count" id="f-count"></div>
+    </div>
+    <table id="pt-table">
+      <thead>
+        <tr><th>Data</th><th>Horário</th><th>Turno</th><th>Setor</th><th>Atividade</th><th>Responsável</th><th>Tag</th><th>Duração</th></tr>
+      </thead>
+      <tbody>
+        
+    <tr data-date="2026-08-20" data-setor="Caldeira" data-resp="Edson">
+      <td>20/08</td>
+      <td>07:00–09:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Caldeira</td>
+      <td>Substituir 2 disjuntores de ar condicionado que sofreram aquecimento</td>
+      <td>Edson</td>
+      <td>—</td>
+      <td class="num">2h</td>
+    </tr>
+    <tr data-date="2026-08-20" data-setor="Quimicos" data-resp="Lucas">
+      <td>20/08</td>
+      <td>07:00–08:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Quimicos</td>
+      <td>FIT-01 - Alfa Milase, retirar do local para calibração</td>
+      <td>Lucas</td>
+      <td>FIT-13F001</td>
+      <td class="num">1h</td>
+    </tr>
+    <tr data-date="2026-08-20" data-setor="Quimicos" data-resp="Valter">
+      <td>20/08</td>
+      <td>07:00–08:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Quimicos</td>
+      <td>FIT-01 - Alfa Milase, retirar do local para calibração</td>
+      <td>Valter</td>
+      <td>FIT-13F001</td>
+      <td class="num">1h</td>
+    </tr>
+    <tr data-date="2026-08-20" data-setor="Caldeira" data-resp="Gianny">
+      <td>20/08</td>
+      <td>07:00–19:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Caldeira</td>
+      <td>Apoiar a integração da nova caldeira ao sistema atual (parte 1/2)</td>
+      <td>Gianny</td>
+      <td>—</td>
+      <td class="num">11.0h</td>
+    </tr>
+    <tr data-date="2026-08-20" data-setor="Secagem" data-resp="Dionatan">
+      <td>20/08</td>
+      <td>07:00–19:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Secagem</td>
+      <td>Inspecionar a caixa de ligação e fazer reaperto nos motores (50 motores) (parte 1/3)</td>
+      <td>Dionatan</td>
+      <td>SE-13M001</td>
+      <td class="num">11.0h</td>
+    </tr>
+    <tr data-date="2026-08-20" data-setor="Moagem" data-resp="Adriel">
+      <td>20/08</td>
+      <td>07:00–09:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Moagem</td>
+      <td>Calibração da balança de fluxo</td>
+      <td>Adriel</td>
+      <td>—</td>
+      <td class="num">2.0h</td>
+    </tr>
+    <tr data-date="2026-08-20" data-setor="Quimicos" data-resp="Lucas">
+      <td>20/08</td>
+      <td>08:00–09:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Quimicos</td>
+      <td>FIT-02 - Gluco, retirar do local para calibração</td>
+      <td>Lucas</td>
+      <td>FIT-13F002</td>
+      <td class="num">1h</td>
+    </tr>
+    <tr data-date="2026-08-20" data-setor="Quimicos" data-resp="Valter">
+      <td>20/08</td>
+      <td>08:00–09:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Quimicos</td>
+      <td>FIT-02 - Gluco, retirar do local para calibração</td>
+      <td>Valter</td>
+      <td>FIT-13F002</td>
+      <td class="num">1h</td>
+    </tr>
+    <tr data-date="2026-08-20" data-setor="Caldeira" data-resp="Edson">
+      <td>20/08</td>
+      <td>09:00–11:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Caldeira</td>
+      <td>Instalar 2 disjuntores de 2 ar condicionados que estão faltando</td>
+      <td>Edson</td>
+      <td>—</td>
+      <td class="num">2h</td>
+    </tr>
+    <tr data-date="2026-08-20" data-setor="Quimicos" data-resp="Lucas">
+      <td>20/08</td>
+      <td>09:00–10:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Quimicos</td>
+      <td>FIT-03 - Alfa, retirar do local para calibração</td>
+      <td>Lucas</td>
+      <td>FIT-13F003</td>
+      <td class="num">1h</td>
+    </tr>
+    <tr data-date="2026-08-20" data-setor="Quimicos" data-resp="Valter">
+      <td>20/08</td>
+      <td>09:00–10:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Quimicos</td>
+      <td>FIT-03 - Alfa, retirar do local para calibração</td>
+      <td>Valter</td>
+      <td>FIT-13F003</td>
+      <td class="num">1h</td>
+    </tr>
+    <tr data-date="2026-08-20" data-setor="Moagem" data-resp="Adriel">
+      <td>20/08</td>
+      <td>09:00–11:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Moagem</td>
+      <td>Revisão da balança de fluxo, substituir borracha furada</td>
+      <td>Adriel</td>
+      <td>—</td>
+      <td class="num">2.0h</td>
+    </tr>
+    <tr data-date="2026-08-20" data-setor="Quimicos" data-resp="Lucas">
+      <td>20/08</td>
+      <td>10:00–11:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Quimicos</td>
+      <td>Retirar do local para calibração</td>
+      <td>Lucas</td>
+      <td>FIT-054-0301</td>
+      <td class="num">1h</td>
+    </tr>
+    <tr data-date="2026-08-20" data-setor="Quimicos" data-resp="Valter">
+      <td>20/08</td>
+      <td>10:00–11:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Quimicos</td>
+      <td>Retirar do local para calibração</td>
+      <td>Valter</td>
+      <td>FIT-054-0301</td>
+      <td class="num">1h</td>
+    </tr>
+    <tr data-date="2026-08-20" data-setor="Caldeira" data-resp="Edson">
+      <td>20/08</td>
+      <td>12:00–14:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Caldeira</td>
+      <td>Trocar disjuntor de alimentação do compressor de ar comprimido</td>
+      <td>Edson</td>
+      <td>—</td>
+      <td class="num">2h</td>
+    </tr>
+    <tr data-date="2026-08-20" data-setor="Quimicos" data-resp="Lucas">
+      <td>20/08</td>
+      <td>12:00–15:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Quimicos</td>
+      <td>Retirar do local para calibração, precisa montar andaime</td>
+      <td>Lucas</td>
+      <td>FIT-0605</td>
+      <td class="num">3h</td>
+    </tr>
+    <tr data-date="2026-08-20" data-setor="Quimicos" data-resp="Valter">
+      <td>20/08</td>
+      <td>12:00–15:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Quimicos</td>
+      <td>Retirar do local para calibração, precisa montar andaime</td>
+      <td>Valter</td>
+      <td>FIT-0605</td>
+      <td class="num">3h</td>
+    </tr>
+    <tr data-date="2026-08-20" data-setor="Moagem" data-resp="Adriel">
+      <td>20/08</td>
+      <td>12:00–13:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Moagem</td>
+      <td>Revisão da balança de fluxo, reinstalar proteção do pistão que foi retirado</td>
+      <td>Adriel</td>
+      <td>—</td>
+      <td class="num">1.0h</td>
+    </tr>
+    <tr data-date="2026-08-20" data-setor="Caldeira" data-resp="Adriel">
+      <td>20/08</td>
+      <td>13:00–19:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Caldeira</td>
+      <td>Inspecionar a caixa de ligação e fazer reaperto nos motores (25 motores) (parte 1/2)</td>
+      <td>Adriel</td>
+      <td>SE-14P001</td>
+      <td class="num">6.0h</td>
+    </tr>
+    <tr data-date="2026-08-20" data-setor="Fermentação" data-resp="Edson">
+      <td>20/08</td>
+      <td>14:00–18:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Fermentação</td>
+      <td>Inspecionar a caixa de ligação e fazer reaperto nos motores (6 motores)</td>
+      <td>Edson</td>
+      <td>SE-13A001</td>
+      <td class="num">4h</td>
+    </tr>
+    <tr data-date="2026-08-21" data-setor="Fabrica De Oleo" data-resp="Valter">
+      <td>21/08</td>
+      <td>07:00–10:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Fabrica De Oleo</td>
+      <td>Limpeza interna transmissor vazão fábrica óleo (Coriolis), desmontar/retirar da linha</td>
+      <td>Valter</td>
+      <td>OS-1716</td>
+      <td class="num">3h</td>
+    </tr>
+    <tr data-date="2026-08-21" data-setor="Moagem" data-resp="Jadson">
+      <td>21/08</td>
+      <td>07:00–14:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Moagem</td>
+      <td>Girar a caixa de ligação dos motores dos rolos dos moinhos</td>
+      <td>Jadson</td>
+      <td>—</td>
+      <td class="num">6h</td>
+    </tr>
+    <tr data-date="2026-08-21" data-setor="Destilaria" data-resp="Edson">
+      <td>21/08</td>
+      <td>07:00–19:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Destilaria</td>
+      <td>Inspecionar a caixa de ligação e fazer reaperto nos motores (15 motores)</td>
+      <td>Edson</td>
+      <td>SE-13G001</td>
+      <td class="num">11h</td>
+    </tr>
+    <tr data-date="2026-08-21" data-setor="Caldeira" data-resp="Gianny">
+      <td>21/08</td>
+      <td>07:00–08:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Caldeira</td>
+      <td>Apoiar a integração da nova caldeira ao sistema atual (parte 2/2)</td>
+      <td>Gianny</td>
+      <td>—</td>
+      <td class="num">1.0h</td>
+    </tr>
+    <tr data-date="2026-08-21" data-setor="Secagem" data-resp="Dionatan">
+      <td>21/08</td>
+      <td>07:00–19:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Secagem</td>
+      <td>Inspecionar a caixa de ligação e fazer reaperto nos motores (50 motores) (parte 2/3)</td>
+      <td>Dionatan</td>
+      <td>SE-13M001</td>
+      <td class="num">11.0h</td>
+    </tr>
+    <tr data-date="2026-08-21" data-setor="Caldeira" data-resp="Adriel">
+      <td>21/08</td>
+      <td>07:00–13:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Caldeira</td>
+      <td>Inspecionar a caixa de ligação e fazer reaperto nos motores (25 motores) (parte 2/2)</td>
+      <td>Adriel</td>
+      <td>SE-14P001</td>
+      <td class="num">5.0h</td>
+    </tr>
+    <tr data-date="2026-08-21" data-setor="Toda Fabrica" data-resp="Gianny">
+      <td>21/08</td>
+      <td>08:00–10:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Toda Fabrica</td>
+      <td>Atualizar todos os backups e relógios dos PLC</td>
+      <td>Gianny</td>
+      <td>—</td>
+      <td class="num">2.0h</td>
+    </tr>
+    <tr data-date="2026-08-21" data-setor="Secagem" data-resp="Gianny">
+      <td>21/08</td>
+      <td>10:00–13:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Secagem</td>
+      <td>Retirada de soft start Siemens SIRIUS (painel Topgren DDG), enviar para reparo externo</td>
+      <td>Gianny</td>
+      <td>—</td>
+      <td class="num">2.0h</td>
+    </tr>
+    <tr data-date="2026-08-21" data-setor="Destilaria" data-resp="Gianny">
+      <td>21/08</td>
+      <td>13:00–19:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Destilaria</td>
+      <td>Limpeza de cartões eletrônicos dos PLC (parte 1/2)</td>
+      <td>Gianny</td>
+      <td>—</td>
+      <td class="num">6.0h</td>
+    </tr>
+    <tr data-date="2026-08-21" data-setor="Caldeira" data-resp="Adriel">
+      <td>21/08</td>
+      <td>13:00–19:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Caldeira</td>
+      <td>Inspecionar instrumentação, limpeza, calibração, ajuste e aferição (parte 1/4)</td>
+      <td>Adriel</td>
+      <td>CAL-14M001</td>
+      <td class="num">6.0h</td>
+    </tr>
+    <tr data-date="2026-08-22" data-setor="Moagem" data-resp="Jadson">
+      <td>22/08</td>
+      <td>07:00–19:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Moagem</td>
+      <td>Inspecionar a caixa de ligação e fazer reaperto nos motores (26 motores)</td>
+      <td>Jadson</td>
+      <td>—</td>
+      <td class="num">11h</td>
+    </tr>
+    <tr data-date="2026-08-22" data-setor="Fermentação" data-resp="Lucas">
+      <td>22/08</td>
+      <td>07:00–09:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Fermentação</td>
+      <td>Mosto - retirar do local para calibração, precisa montar andaime</td>
+      <td>Lucas</td>
+      <td>FIT-052-0901</td>
+      <td class="num">2h</td>
+    </tr>
+    <tr data-date="2026-08-22" data-setor="Fermentação" data-resp="Valter">
+      <td>22/08</td>
+      <td>07:00–09:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Fermentação</td>
+      <td>Mosto - retirar do local para calibração, precisa montar andaime</td>
+      <td>Valter</td>
+      <td>FIT-052-0901</td>
+      <td class="num">2h</td>
+    </tr>
+    <tr data-date="2026-08-22" data-setor="Destilaria" data-resp="Gianny">
+      <td>22/08</td>
+      <td>07:00–13:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Destilaria</td>
+      <td>Limpeza de cartões eletrônicos dos PLC (parte 2/2)</td>
+      <td>Gianny</td>
+      <td>—</td>
+      <td class="num">5.0h</td>
+    </tr>
+    <tr data-date="2026-08-22" data-setor="Secagem" data-resp="Dionatan">
+      <td>22/08</td>
+      <td>07:00–19:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Secagem</td>
+      <td>Inspecionar a caixa de ligação e fazer reaperto nos motores (50 motores) (parte 3/3)</td>
+      <td>Dionatan</td>
+      <td>SE-13M001</td>
+      <td class="num">11.0h</td>
+    </tr>
+    <tr data-date="2026-08-22" data-setor="Fermentação" data-resp="Lucas">
+      <td>22/08</td>
+      <td>09:00–10:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Fermentação</td>
+      <td>Água bruta - retirar do local para calibração</td>
+      <td>Lucas</td>
+      <td>FIT-052-1701</td>
+      <td class="num">1h</td>
+    </tr>
+    <tr data-date="2026-08-22" data-setor="Fermentação" data-resp="Valter">
+      <td>22/08</td>
+      <td>09:00–10:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Fermentação</td>
+      <td>Água bruta - retirar do local para calibração</td>
+      <td>Valter</td>
+      <td>FIT-052-1701</td>
+      <td class="num">1h</td>
+    </tr>
+    <tr data-date="2026-08-22" data-setor="Fermentação" data-resp="Lucas">
+      <td>22/08</td>
+      <td>10:00–13:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Fermentação</td>
+      <td>Slurry - retirar do local para calibração, precisa montar andaime</td>
+      <td>Lucas</td>
+      <td>FIT-052-0401</td>
+      <td class="num">2h</td>
+    </tr>
+    <tr data-date="2026-08-22" data-setor="Fermentação" data-resp="Valter">
+      <td>22/08</td>
+      <td>10:00–13:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Fermentação</td>
+      <td>Slurry - retirar do local para calibração, precisa montar andaime</td>
+      <td>Valter</td>
+      <td>FIT-052-0401</td>
+      <td class="num">2h</td>
+    </tr>
+    <tr data-date="2026-08-22" data-setor="Fermentação" data-resp="Lucas">
+      <td>22/08</td>
+      <td>13:00–15:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Fermentação</td>
+      <td>Uréia para propagação - retirar do local para calibração, precisa montar andaime</td>
+      <td>Lucas</td>
+      <td>FIT-052-1601</td>
+      <td class="num">2h</td>
+    </tr>
+    <tr data-date="2026-08-22" data-setor="Fermentação" data-resp="Valter">
+      <td>22/08</td>
+      <td>13:00–15:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Fermentação</td>
+      <td>Uréia para propagação - retirar do local para calibração, precisa montar andaime</td>
+      <td>Valter</td>
+      <td>FIT-052-1601</td>
+      <td class="num">2h</td>
+    </tr>
+    <tr data-date="2026-08-22" data-setor="Toda Fabrica" data-resp="Gianny">
+      <td>22/08</td>
+      <td>13:00–19:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Toda Fabrica</td>
+      <td>Reaperto dos bornes de distribuição dos CCM dos PLC (parte 1/3)</td>
+      <td>Gianny</td>
+      <td>—</td>
+      <td class="num">6.0h</td>
+    </tr>
+    <tr data-date="2026-08-22" data-setor="Fermentação" data-resp="Lucas">
+      <td>22/08</td>
+      <td>15:00–17:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Fermentação</td>
+      <td>Uréia para dorna - retirar do local para calibração, precisa montar andaime</td>
+      <td>Lucas</td>
+      <td>FIT-052-0801</td>
+      <td class="num">2h</td>
+    </tr>
+    <tr data-date="2026-08-22" data-setor="Fermentação" data-resp="Valter">
+      <td>22/08</td>
+      <td>15:00–17:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Fermentação</td>
+      <td>Uréia para dorna - retirar do local para calibração, precisa montar andaime</td>
+      <td>Valter</td>
+      <td>FIT-052-0801</td>
+      <td class="num">2h</td>
+    </tr>
+    <tr data-date="2026-08-23" data-setor="Liquefacao" data-resp="Jadson">
+      <td>23/08</td>
+      <td>07:00–14:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Liquefacao</td>
+      <td>Inspecionar a caixa de ligação e fazer reaperto nos motores (10 motores)</td>
+      <td>Jadson</td>
+      <td>SE-13A001</td>
+      <td class="num">6h</td>
+    </tr>
+    <tr data-date="2026-08-23" data-setor="Fabrica De Oleo" data-resp="Edson">
+      <td>23/08</td>
+      <td>07:00–19:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Fabrica De Oleo</td>
+      <td>Inspecionar a caixa de ligação e fazer reaperto nos motores (22 motores)</td>
+      <td>Edson</td>
+      <td>SE-13G001</td>
+      <td class="num">11h</td>
+    </tr>
+    <tr data-date="2026-08-23" data-setor="Destilaria" data-resp="Lucas">
+      <td>23/08</td>
+      <td>07:00–09:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Destilaria</td>
+      <td>Vazão etanol hidratado - FIT-03, retirar do local para calibração</td>
+      <td>Lucas</td>
+      <td>FIT-13G103</td>
+      <td class="num">2h</td>
+    </tr>
+    <tr data-date="2026-08-23" data-setor="Destilaria" data-resp="Valter">
+      <td>23/08</td>
+      <td>07:00–09:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Destilaria</td>
+      <td>Vazão etanol hidratado - FIT-03, retirar do local para calibração</td>
+      <td>Valter</td>
+      <td>FIT-13G103</td>
+      <td class="num">2h</td>
+    </tr>
+    <tr data-date="2026-08-23" data-setor="Caldeira" data-resp="Adriel">
+      <td>23/08</td>
+      <td>07:00–19:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Caldeira</td>
+      <td>Inspecionar instrumentação, limpeza, calibração, ajuste e aferição (parte 2/4)</td>
+      <td>Adriel</td>
+      <td>CAL-14M001</td>
+      <td class="num">11.0h</td>
+    </tr>
+    <tr data-date="2026-08-23" data-setor="Destilaria" data-resp="Lucas">
+      <td>23/08</td>
+      <td>09:00–11:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Destilaria</td>
+      <td>INPM CLRE - DIT-502, retirar do local para calibração</td>
+      <td>Lucas</td>
+      <td>DIT-13G502</td>
+      <td class="num">2h</td>
+    </tr>
+    <tr data-date="2026-08-23" data-setor="Destilaria" data-resp="Valter">
+      <td>23/08</td>
+      <td>09:00–11:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Destilaria</td>
+      <td>INPM CLRE - DIT-502, retirar do local para calibração</td>
+      <td>Valter</td>
+      <td>DIT-13G502</td>
+      <td class="num">2h</td>
+    </tr>
+    <tr data-date="2026-08-23" data-setor="Destilaria" data-resp="Lucas">
+      <td>23/08</td>
+      <td>12:00–14:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Destilaria</td>
+      <td>INPM hidratado - DIT-101, retirar do local para calibração</td>
+      <td>Lucas</td>
+      <td>DIT-13G101</td>
+      <td class="num">2h</td>
+    </tr>
+    <tr data-date="2026-08-23" data-setor="Destilaria" data-resp="Valter">
+      <td>23/08</td>
+      <td>12:00–14:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Destilaria</td>
+      <td>INPM hidratado - DIT-101, retirar do local para calibração</td>
+      <td>Valter</td>
+      <td>DIT-13G101</td>
+      <td class="num">2h</td>
+    </tr>
+    <tr data-date="2026-08-23" data-setor="Destilaria" data-resp="Lucas">
+      <td>23/08</td>
+      <td>14:00–16:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Destilaria</td>
+      <td>INPM anidro - DIT-501, retirar do local para calibração</td>
+      <td>Lucas</td>
+      <td>DIT-13G501</td>
+      <td class="num">2h</td>
+    </tr>
+    <tr data-date="2026-08-23" data-setor="Destilaria" data-resp="Valter">
+      <td>23/08</td>
+      <td>14:00–16:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Destilaria</td>
+      <td>INPM anidro - DIT-501, retirar do local para calibração</td>
+      <td>Valter</td>
+      <td>DIT-13G501</td>
+      <td class="num">2h</td>
+    </tr>
+    <tr data-date="2026-08-23" data-setor="Destilaria" data-resp="Lucas">
+      <td>23/08</td>
+      <td>16:00–18:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Destilaria</td>
+      <td>Alimentação CLRE - FIT-503, retirar do local para calibração</td>
+      <td>Lucas</td>
+      <td>FIT-13G503</td>
+      <td class="num">2h</td>
+    </tr>
+    <tr data-date="2026-08-23" data-setor="Destilaria" data-resp="Valter">
+      <td>23/08</td>
+      <td>16:00–18:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Destilaria</td>
+      <td>Alimentação CLRE - FIT-503, retirar do local para calibração</td>
+      <td>Valter</td>
+      <td>FIT-13G503</td>
+      <td class="num">2h</td>
+    </tr>
+    <tr data-date="2026-08-24" data-setor="Evaporacao" data-resp="Edson">
+      <td>24/08</td>
+      <td>07:00–11:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Evaporacao</td>
+      <td>Inspecionar a caixa de ligação e fazer reaperto nos motores (6 motores)</td>
+      <td>Edson</td>
+      <td>SE-13G001</td>
+      <td class="num">4h</td>
+    </tr>
+    <tr data-date="2026-08-24" data-setor="Toda Fabrica" data-resp="Gianny">
+      <td>24/08</td>
+      <td>07:00–19:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Toda Fabrica</td>
+      <td>Reaperto dos bornes de distribuição dos CCM dos PLC (parte 2/3)</td>
+      <td>Gianny</td>
+      <td>—</td>
+      <td class="num">11.0h</td>
+    </tr>
+    <tr data-date="2026-08-24" data-setor="Caldeira" data-resp="Adriel">
+      <td>24/08</td>
+      <td>07:00–19:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Caldeira</td>
+      <td>Inspecionar instrumentação, limpeza, calibração, ajuste e aferição (parte 3/4)</td>
+      <td>Adriel</td>
+      <td>CAL-14M001</td>
+      <td class="num">11.0h</td>
+    </tr>
+    <tr data-date="2026-08-24" data-setor="Torres" data-resp="Edson">
+      <td>24/08</td>
+      <td>12:00–16:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Torres</td>
+      <td>Inspecionar a caixa de ligação e fazer reaperto nos motores (6 motores)</td>
+      <td>Edson</td>
+      <td>SE-13D001</td>
+      <td class="num">4h</td>
+    </tr>
+    <tr data-date="2026-08-25" data-setor="Toda Fabrica" data-resp="Gianny">
+      <td>25/08</td>
+      <td>07:00–13:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Toda Fabrica</td>
+      <td>Reaperto dos bornes de distribuição dos CCM dos PLC (parte 3/3)</td>
+      <td>Gianny</td>
+      <td>—</td>
+      <td class="num">5.0h</td>
+    </tr>
+    <tr data-date="2026-08-25" data-setor="Caldeira" data-resp="Adriel">
+      <td>25/08</td>
+      <td>07:00–13:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Caldeira</td>
+      <td>Inspecionar instrumentação, limpeza, calibração, ajuste e aferição (parte 4/4)</td>
+      <td>Adriel</td>
+      <td>CAL-14M001</td>
+      <td class="num">5.0h</td>
+    </tr>
+    <tr data-date="2026-08-25" data-setor="Moagem" data-resp="Gianny">
+      <td>25/08</td>
+      <td>13:00–15:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Moagem</td>
+      <td>Implantar rotina com AVEVA para buscar BRIX e densidade e calcular automaticamente dosagens de uréia e glucoamilase (melhoria de processo)</td>
+      <td>Gianny</td>
+      <td>—</td>
+      <td class="num">2.0h</td>
+    </tr>
+    <tr data-date="2026-08-25" data-setor="Toda Fabrica" data-resp="Gianny">
+      <td>25/08</td>
+      <td>15:00–19:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Toda Fabrica</td>
+      <td>Inventário da rede e levantamento da topologia lógica e física (PRONETA e Wireshark) (parte 1/2)</td>
+      <td>Gianny</td>
+      <td>—</td>
+      <td class="num">4.0h</td>
+    </tr>
+    <tr data-date="2026-08-26" data-setor="Toda Fabrica" data-resp="Gianny">
+      <td>26/08</td>
+      <td>07:00–08:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Toda Fabrica</td>
+      <td>Inventário da rede e levantamento da topologia lógica e física (PRONETA e Wireshark) (parte 2/2)</td>
+      <td>Gianny</td>
+      <td>—</td>
+      <td class="num">1.0h</td>
+    </tr>
+    <tr data-date="2026-08-31" data-setor="Secagem" data-resp="Gianny">
+      <td>31/08</td>
+      <td>07:00–16:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Secagem</td>
+      <td>Comissionar os sensores de vibração e temperatura do decanter, para que no término da parada já volte em funcionamento</td>
+      <td>Gianny</td>
+      <td>—</td>
+      <td class="num">8h</td>
+    </tr>
+    <tr data-date="2026-08-31" data-setor="Secagem" data-resp="Lucas">
+      <td>31/08</td>
+      <td>07:00–16:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Secagem</td>
+      <td>Comissionar os sensores de vibração e temperatura do decanter, para que no término da parada já volte em funcionamento</td>
+      <td>Lucas</td>
+      <td>—</td>
+      <td class="num">8h</td>
+    </tr>
+    <tr data-date="2026-09-06" data-setor="Caldeira" data-resp="Lucas">
+      <td>06/09</td>
+      <td>07:00–14:00</td>
+      <td><span class="chip" style="background:var(--series-5);">D</span></td>
+      <td>Caldeira</td>
+      <td>Instalação borne fusível remota Dujua, substituir comum por fusível</td>
+      <td>Lucas</td>
+      <td>—</td>
+      <td class="num">6h</td>
+    </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    function applyPtFilters() {
+      var dateVal = document.getElementById('f-date').value;
+      var setorVal = document.getElementById('f-setor').value;
+      var respVal = document.getElementById('f-resp').value;
+      var rows = document.querySelectorAll('#pt-table tbody tr');
+      var visible = 0;
+      rows.forEach(function(row) {
+        var ok = (!dateVal || row.getAttribute('data-date') === dateVal) &&
+                 (!setorVal || row.getAttribute('data-setor') === setorVal) &&
+                 (!respVal || row.getAttribute('data-resp') === respVal);
+        row.style.display = ok ? '' : 'none';
+        if (ok) visible++;
+      });
+      var total = rows.length;
+      var countEl = document.getElementById('f-count');
+      countEl.textContent = (visible === total) ? (total + ' tarefas') : (visible + ' de ' + total + ' tarefas');
+    }
+    function clearPtFilters() {
+      document.getElementById('f-date').value = '';
+      document.getElementById('f-setor').value = '';
+      document.getElementById('f-resp').value = '';
+      applyPtFilters();
+    }
+    applyPtFilters();
+  </script>
+
+  <footer>Prévia gerada a partir dos lotes de atividades recebidos na conversa · próximos lotes serão incorporados e este rascunho será atualizado · entregáveis finais: Excel (Gantt) + JSON de importação (site PCM).</footer>
+</div>
+</div>
+</body>
+</html>
