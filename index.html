@@ -168,7 +168,7 @@
   </header>
 
   <div class="stat-row">
-    <div class="stat-tile"><div class="val">9</div><div class="lbl">responsabilidades de longa duração</div></div>
+    <div class="stat-tile"><div class="val">8</div><div class="lbl">responsabilidades de longa duração</div></div>
     <div class="stat-tile"><div class="val">75</div><div class="lbl">tarefas pontuais recebidas</div></div>
     <div class="stat-tile"><div class="val">322.5h</div><div class="lbl">horas pontuais já alocadas</div></div>
     <div class="stat-tile highlight"><div class="val" style="font-size:16px;">Valter</div><div class="lbl">mais atividades (25)</div></div>
@@ -181,9 +181,8 @@
     <h2>Calendário da equipe (folgas + atividades)</h2>
     <div class="panel-sub">Uma linha por eletricista, agrupados por turno. Dias de folga aparecem hachurados com "F" — nesses dias ninguém pode receber programação.</div>
     <div class="legend">
-      <div class="legend-item"><span class="legend-swatch" style="background:var(--series-1)"></span>Turno A (Vanderley)</div>
-      <div class="legend-item"><span class="legend-swatch" style="background:var(--series-2)"></span>Turno B (Carlos)</div>
-      <div class="legend-item"><span class="legend-swatch" style="background:var(--series-3)"></span>Turno C (Leandro)</div>
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--series-2)"></span>Turno único 07:00–19:00 (Carlos)</div>
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--series-3)"></span>Turno único 19:00–07:00 (Leandro)</div>
       <div class="legend-item"><span class="legend-swatch" style="background:var(--series-5)"></span>Turno único 07:00–19:00 (demais)</div>
       <div class="legend-item"><span class="legend-swatch folga"></span>Folga</div>
       <div class="legend-item"><span class="legend-swatch" style="background:var(--series-1)"></span>Responsabilidade de longa duração (dia inteiro)</div>
@@ -202,28 +201,28 @@
     <div class="gantt-row">
       <div class="row-label">
         <span class="row-name">Vanderley</span>
-        <span class="row-desc">Turno A (07:00–15:00) — cobertura contínua</span>
+        <span class="row-desc">Sem cobertura de turno atribuída nesta parada</span>
       </div>
       <div class="row-track cal-track" style="grid-template-columns: repeat(18, 1fr);">
-        <div class="cal-cell block" style="background:var(--series-1);" title="Vanderley — Atender o turno A"></div><div class="cal-cell block" style="background:var(--series-1);" title="Vanderley — Atender o turno A"></div><div class="cal-cell block" style="background:var(--series-1);" title="Vanderley — Atender o turno A"></div><div class="cal-cell block" style="background:var(--series-1);" title="Vanderley — Atender o turno A"></div><div class="cal-cell block" style="background:var(--series-1);" title="Vanderley — Atender o turno A"></div><div class="cal-cell folga" title="Vanderley — Folga">F</div><div class="cal-cell block" style="background:var(--series-1);" title="Vanderley — Atender o turno A"></div><div class="cal-cell block" style="background:var(--series-1);" title="Vanderley — Atender o turno A"></div><div class="cal-cell block" style="background:var(--series-1);" title="Vanderley — Atender o turno A"></div><div class="cal-cell block" style="background:var(--series-1);" title="Vanderley — Atender o turno A"></div><div class="cal-cell block" style="background:var(--series-1);" title="Vanderley — Atender o turno A"></div><div class="cal-cell folga" title="Vanderley — Folga">F</div><div class="cal-cell block" style="background:var(--series-1);" title="Vanderley — Atender o turno A"></div><div class="cal-cell block" style="background:var(--series-1);" title="Vanderley — Atender o turno A"></div><div class="cal-cell block" style="background:var(--series-1);" title="Vanderley — Atender o turno A"></div><div class="cal-cell block" style="background:var(--series-1);" title="Vanderley — Atender o turno A"></div><div class="cal-cell block" style="background:var(--series-1);" title="Vanderley — Atender o turno A"></div><div class="cal-cell folga" title="Vanderley — Folga">F</div>
+        <div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell folga" title="Vanderley — Folga">F</div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell folga" title="Vanderley — Folga">F</div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell free"></div><div class="cal-cell folga" title="Vanderley — Folga">F</div>
       </div>
     </div>
     <div class="gantt-row">
       <div class="row-label">
         <span class="row-name">Carlos</span>
-        <span class="row-desc">Turno B (15:00–23:00) — cobertura contínua</span>
+        <span class="row-desc">Turno único (07:00–19:00)</span>
       </div>
       <div class="row-track cal-track" style="grid-template-columns: repeat(18, 1fr);">
-        <div class="cal-cell folga" title="Carlos — Folga">F</div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno B"></div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno B"></div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno B"></div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno B"></div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno B"></div><div class="cal-cell folga" title="Carlos — Folga">F</div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno B"></div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno B"></div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno B"></div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno B"></div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno B"></div><div class="cal-cell folga" title="Carlos — Folga">F</div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno B"></div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno B"></div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno B"></div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno B"></div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno B"></div>
+        <div class="cal-cell folga" title="Carlos — Folga">F</div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno (07:00–19:00)"></div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno (07:00–19:00)"></div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno (07:00–19:00)"></div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno (07:00–19:00)"></div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno (07:00–19:00)"></div><div class="cal-cell folga" title="Carlos — Folga">F</div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno (07:00–19:00)"></div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno (07:00–19:00)"></div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno (07:00–19:00)"></div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno (07:00–19:00)"></div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno (07:00–19:00)"></div><div class="cal-cell folga" title="Carlos — Folga">F</div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno (07:00–19:00)"></div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno (07:00–19:00)"></div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno (07:00–19:00)"></div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno (07:00–19:00)"></div><div class="cal-cell block" style="background:var(--series-2);" title="Carlos — Atender o turno (07:00–19:00)"></div>
       </div>
     </div>
     <div class="gantt-row">
       <div class="row-label">
         <span class="row-name">Leandro</span>
-        <span class="row-desc">Turno C (23:00–07:00) — cobertura contínua</span>
+        <span class="row-desc">Turno único (19:00–07:00)</span>
       </div>
       <div class="row-track cal-track" style="grid-template-columns: repeat(18, 1fr);">
-        <div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno C"></div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno C"></div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno C"></div><div class="cal-cell folga" title="Leandro — Folga">F</div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno C"></div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno C"></div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno C"></div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno C"></div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno C"></div><div class="cal-cell folga" title="Leandro — Folga">F</div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno C"></div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno C"></div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno C"></div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno C"></div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno C"></div><div class="cal-cell folga" title="Leandro — Folga">F</div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno C"></div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno C"></div>
+        <div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno (19:00–07:00)"></div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno (19:00–07:00)"></div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno (19:00–07:00)"></div><div class="cal-cell folga" title="Leandro — Folga">F</div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno (19:00–07:00)"></div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno (19:00–07:00)"></div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno (19:00–07:00)"></div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno (19:00–07:00)"></div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno (19:00–07:00)"></div><div class="cal-cell folga" title="Leandro — Folga">F</div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno (19:00–07:00)"></div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno (19:00–07:00)"></div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno (19:00–07:00)"></div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno (19:00–07:00)"></div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno (19:00–07:00)"></div><div class="cal-cell folga" title="Leandro — Folga">F</div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno (19:00–07:00)"></div><div class="cal-cell block" style="background:var(--series-3);" title="Leandro — Atender o turno (19:00–07:00)"></div>
       </div>
     </div>
     <div class="gantt-row">
@@ -338,11 +337,6 @@
           <div class="rank-val">2</div>
         </div>
         <div class="rank-row">
-          <div class="rank-name">Vanderley</div>
-          <div class="rank-bar-track"><div class="rank-bar" style="width:4%; background:var(--series-1);"></div></div>
-          <div class="rank-val">1</div>
-        </div>
-        <div class="rank-row">
           <div class="rank-name">Carlos</div>
           <div class="rank-bar-track"><div class="rank-bar" style="width:4%; background:var(--series-2);"></div></div>
           <div class="rank-val">1</div>
@@ -357,10 +351,15 @@
           <div class="rank-bar-track"><div class="rank-bar" style="width:4%; background:var(--series-5);"></div></div>
           <div class="rank-val">1</div>
         </div>
+        <div class="rank-row">
+          <div class="rank-name">Vanderley</div>
+          <div class="rank-bar-track"><div class="rank-bar" style="width:0%; background:var(--series-1);"></div></div>
+          <div class="rank-val">0</div>
+        </div>
     </div>
     <div class="panel">
       <h2>Quem tem mais horas disponíveis para programar</h2>
-      <div class="panel-sub">Capacidade efetiva na janela (horas do turno de cada um × dias sem folga) menos o que já foi programado. Vanderley/Carlos/Leandro seguem em 7h/dia (turno A/B/C); os demais em 11h/dia (turno único 07:00–19:00).</div>
+      <div class="panel-sub">Capacidade efetiva na janela (horas do turno de cada um × dias sem folga) menos o que já foi programado. Vanderley segue em 7h/dia (sem turno atribuído nesta parada); os demais em 11h/dia (turno único, incluindo Carlos 07:00–19:00 e Leandro 19:00–07:00).</div>
       
         <div class="rank-row">
           <div class="rank-name">Gianny</div>
@@ -383,6 +382,11 @@
           <div class="rank-val">115h</div>
         </div>
         <div class="rank-row">
+          <div class="rank-name">Vanderley</div>
+          <div class="rank-bar-track"><div class="rank-bar" style="width:67%; background:var(--series-1);"></div></div>
+          <div class="rank-val">105h</div>
+        </div>
+        <div class="rank-row">
           <div class="rank-name">Valter</div>
           <div class="rank-bar-track"><div class="rank-bar" style="width:32%; background:var(--series-5);"></div></div>
           <div class="rank-val">50h</div>
@@ -400,11 +404,6 @@
         <div class="rank-row">
           <div class="rank-name">Marcio</div>
           <div class="rank-bar-track"><div class="rank-bar" style="width:0%; background:var(--series-5);"></div></div>
-          <div class="rank-val">0h</div>
-        </div>
-        <div class="rank-row">
-          <div class="rank-name">Vanderley</div>
-          <div class="rank-bar-track"><div class="rank-bar" style="width:0%; background:var(--series-1);"></div></div>
           <div class="rank-val">0h</div>
         </div>
         <div class="rank-row">
