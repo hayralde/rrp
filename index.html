@@ -146,6 +146,11 @@
   .task-list li { margin-bottom: 3px; }
   .task-list li:last-child { margin-bottom: 0; }
 
+  .pt-done-cell { text-align: center; }
+  .pt-done-check { width: 16px; height: 16px; cursor: pointer; accent-color: var(--series-3); }
+  tr.pt-done td:not(.pt-done-cell) { opacity: 0.5; text-decoration: line-through; text-decoration-color: var(--text-muted); }
+  tr.pt-done { background: color-mix(in oklab, var(--series-3) 6%, transparent); }
+
   .warn-panel { background: var(--warn-bg); border-color: var(--warn-border); }
   .warn-panel h3 { margin: 0 0 8px; font-size: 13.5px; }
   .warn-panel ul { margin: 0; padding-left: 18px; font-size: 12.5px; }
@@ -431,6 +436,14 @@
     <div class="panel-sub">Alocação automática (sem data pedida pelo usuário) — ordenadas por início. A coluna Turno usa a mesma cor do calendário acima. Lucas e Valter: atividades do mesmo dia e setor aparecem agrupadas numa única linha.</div>
     <div class="filter-bar">
       <div class="filter-field">
+        <label for="f-status">Status</label>
+        <select id="f-status" onchange="applyPtFilters()">
+          <option value="">Todas</option>
+          <option value="pendente">Pendentes</option>
+          <option value="concluida">Concluídas</option>
+        </select>
+      </div>
+      <div class="filter-field">
         <label for="f-date">Data</label>
         <select id="f-date" onchange="applyPtFilters()">
           <option value="">Todas</option>
@@ -457,10 +470,10 @@
     <div class="table-scroll">
     <table id="pt-table">
       <thead>
-        <tr><th>Data</th><th>Horário</th><th>Turno</th><th>Setor</th><th>Atividade</th><th>Responsável</th><th>OS</th><th>Duração</th></tr>
+        <tr><th>Data</th><th>Horário</th><th>Turno</th><th>Setor</th><th>Atividade</th><th>Responsável</th><th>OS</th><th>Duração</th><th>Concluída</th></tr>
       </thead>
       <tbody>
-            <tr data-date="2026-08-22" data-setor="Quimicos" data-resp="Lucas">
+            <tr data-date="2026-08-22" data-setor="Quimicos" data-resp="Lucas" data-key="2026-08-22|Quimicos|Lucas|1">
       <td>22/08</td>
       <td>07:00–12:00, 13:00–15:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -469,8 +482,10 @@
       <td>Lucas</td>
       <td>2950</td>
       <td class="num">7h (5 itens)</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-22" data-setor="Quimicos" data-resp="Valter">
+    <tr data-date="2026-08-22" data-setor="Quimicos" data-resp="Valter" data-key="2026-08-22|Quimicos|Valter|2">
       <td>22/08</td>
       <td>07:00–12:00, 13:00–15:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -479,8 +494,10 @@
       <td>Valter</td>
       <td>2950</td>
       <td class="num">7h (5 itens)</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-22" data-setor="Fermentação" data-resp="Nibson">
+    <tr data-date="2026-08-22" data-setor="Fermentação" data-resp="Nibson" data-key="2026-08-22|Fermentação|Nibson|3">
       <td>22/08</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -489,8 +506,10 @@
       <td>Nibson</td>
       <td>2998</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-22" data-setor="Toda Fabrica" data-resp="Vanderley">
+    <tr data-date="2026-08-22" data-setor="Toda Fabrica" data-resp="Vanderley" data-key="2026-08-22|Toda Fabrica|Vanderley|4">
       <td>22/08</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -499,8 +518,10 @@
       <td>Vanderley</td>
       <td>3024</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-22" data-setor="Toda Fabrica" data-resp="Leandro">
+    <tr data-date="2026-08-22" data-setor="Toda Fabrica" data-resp="Leandro" data-key="2026-08-22|Toda Fabrica|Leandro|5">
       <td>22/08</td>
       <td>19:00–07:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -509,8 +530,10 @@
       <td>Leandro</td>
       <td>3023</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-22" data-setor="Fabrica De Oleo" data-resp="Marcio">
+    <tr data-date="2026-08-22" data-setor="Fabrica De Oleo" data-resp="Marcio" data-key="2026-08-22|Fabrica De Oleo|Marcio|6">
       <td>22/08</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -519,8 +542,10 @@
       <td>Marcio</td>
       <td>2933</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-23" data-setor="Evaporacao" data-resp="Lucas">
+    <tr data-date="2026-08-23" data-setor="Evaporacao" data-resp="Lucas" data-key="2026-08-23|Evaporacao|Lucas|7">
       <td>23/08</td>
       <td>07:00–12:00, 13:00–14:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -529,8 +554,10 @@
       <td>Lucas</td>
       <td>3002</td>
       <td class="num">6.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-23" data-setor="Destilaria" data-resp="Edson">
+    <tr data-date="2026-08-23" data-setor="Destilaria" data-resp="Edson" data-key="2026-08-23|Destilaria|Edson|8">
       <td>23/08</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -539,8 +566,10 @@
       <td>Edson</td>
       <td>2932</td>
       <td class="num">11h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-23" data-setor="Moagem" data-resp="Jadson">
+    <tr data-date="2026-08-23" data-setor="Moagem" data-resp="Jadson" data-key="2026-08-23|Moagem|Jadson|9">
       <td>23/08</td>
       <td>07:00–12:00, 13:00–14:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -549,8 +578,10 @@
       <td>Jadson</td>
       <td>2947</td>
       <td class="num">6.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-23" data-setor="Fabrica De Oleo" data-resp="Valter">
+    <tr data-date="2026-08-23" data-setor="Fabrica De Oleo" data-resp="Valter" data-key="2026-08-23|Fabrica De Oleo|Valter|10">
       <td>23/08</td>
       <td>07:00–10:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -559,8 +590,10 @@
       <td>Valter</td>
       <td>1716</td>
       <td class="num">3h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-23" data-setor="Secagem" data-resp="Valter">
+    <tr data-date="2026-08-23" data-setor="Secagem" data-resp="Valter" data-key="2026-08-23|Secagem|Valter|11">
       <td>23/08</td>
       <td>10:00–12:30</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -569,8 +602,10 @@
       <td>Valter</td>
       <td>2954</td>
       <td class="num">1.5h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-23" data-setor="Secagem" data-resp="Valter">
+    <tr data-date="2026-08-23" data-setor="Secagem" data-resp="Valter" data-key="2026-08-23|Secagem|Valter|12">
       <td>23/08</td>
       <td>13:00–14:30</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -579,8 +614,10 @@
       <td>Valter</td>
       <td>2954</td>
       <td class="num">1.5h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-23" data-setor="Moagem" data-resp="Jadson">
+    <tr data-date="2026-08-23" data-setor="Moagem" data-resp="Jadson" data-key="2026-08-23|Moagem|Jadson|13">
       <td>23/08</td>
       <td>14:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -589,8 +626,10 @@
       <td>Jadson</td>
       <td>2928</td>
       <td class="num">5.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-23" data-setor="Secagem" data-resp="Valter">
+    <tr data-date="2026-08-23" data-setor="Secagem" data-resp="Valter" data-key="2026-08-23|Secagem|Valter|14">
       <td>23/08</td>
       <td>14:30–16:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -599,8 +638,10 @@
       <td>Valter</td>
       <td>2954</td>
       <td class="num">1.5h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-23" data-setor="Toda Fabrica" data-resp="Vanderley">
+    <tr data-date="2026-08-23" data-setor="Toda Fabrica" data-resp="Vanderley" data-key="2026-08-23|Toda Fabrica|Vanderley|15">
       <td>23/08</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -609,8 +650,10 @@
       <td>Vanderley</td>
       <td>3024</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-24" data-setor="Caldeira" data-resp="Edson">
+    <tr data-date="2026-08-24" data-setor="Caldeira" data-resp="Edson" data-key="2026-08-24|Caldeira|Edson|16">
       <td>24/08</td>
       <td>07:00–09:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -619,8 +662,10 @@
       <td>Edson</td>
       <td>2941</td>
       <td class="num">2h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-24" data-setor="Caldeira" data-resp="Edson">
+    <tr data-date="2026-08-24" data-setor="Caldeira" data-resp="Edson" data-key="2026-08-24|Caldeira|Edson|17">
       <td>24/08</td>
       <td>09:00–11:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -629,8 +674,10 @@
       <td>Edson</td>
       <td>2942</td>
       <td class="num">2h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-24" data-setor="Caldeira" data-resp="Edson">
+    <tr data-date="2026-08-24" data-setor="Caldeira" data-resp="Edson" data-key="2026-08-24|Caldeira|Edson|18">
       <td>24/08</td>
       <td>13:00–15:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -639,8 +686,10 @@
       <td>Edson</td>
       <td>2943</td>
       <td class="num">2h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-24" data-setor="Fermentação" data-resp="Vanderley">
+    <tr data-date="2026-08-24" data-setor="Fermentação" data-resp="Vanderley" data-key="2026-08-24|Fermentação|Vanderley|19">
       <td>24/08</td>
       <td>15:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -649,8 +698,10 @@
       <td>Vanderley</td>
       <td>2930</td>
       <td class="num">4h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-24" data-setor="Fermentação" data-resp="Lucas">
+    <tr data-date="2026-08-24" data-setor="Fermentação" data-resp="Lucas" data-key="2026-08-24|Fermentação|Lucas|20">
       <td>24/08</td>
       <td>07:00–12:00, 13:00–17:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -659,8 +710,10 @@
       <td>Lucas</td>
       <td>2949</td>
       <td class="num">9h (5 itens)</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-24" data-setor="Moagem" data-resp="Jadson">
+    <tr data-date="2026-08-24" data-setor="Moagem" data-resp="Jadson" data-key="2026-08-24|Moagem|Jadson|21">
       <td>24/08</td>
       <td>07:00–12:00, 13:00–14:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -669,8 +722,10 @@
       <td>Jadson</td>
       <td>2928</td>
       <td class="num">6.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-24" data-setor="Liquefacao" data-resp="Jadson">
+    <tr data-date="2026-08-24" data-setor="Liquefacao" data-resp="Jadson" data-key="2026-08-24|Liquefacao|Jadson|22">
       <td>24/08</td>
       <td>14:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -679,8 +734,10 @@
       <td>Jadson</td>
       <td>2929</td>
       <td class="num">5.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-24" data-setor="Secagem" data-resp="Nibson">
+    <tr data-date="2026-08-24" data-setor="Secagem" data-resp="Nibson" data-key="2026-08-24|Secagem|Nibson|23">
       <td>24/08</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -689,8 +746,10 @@
       <td>Nibson</td>
       <td>3003</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-24" data-setor="Toda Fabrica" data-resp="Vanderley">
+    <tr data-date="2026-08-24" data-setor="Toda Fabrica" data-resp="Vanderley" data-key="2026-08-24|Toda Fabrica|Vanderley|24">
       <td>24/08</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -699,8 +758,10 @@
       <td>Vanderley</td>
       <td>3024</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-24" data-setor="Toda Fabrica" data-resp="Marcio">
+    <tr data-date="2026-08-24" data-setor="Toda Fabrica" data-resp="Marcio" data-key="2026-08-24|Toda Fabrica|Marcio|25">
       <td>24/08</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -709,8 +770,10 @@
       <td>Marcio</td>
       <td>3112</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-24" data-setor="Toda Fabrica" data-resp="Leandro">
+    <tr data-date="2026-08-24" data-setor="Toda Fabrica" data-resp="Leandro" data-key="2026-08-24|Toda Fabrica|Leandro|26">
       <td>24/08</td>
       <td>19:00–07:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -719,8 +782,10 @@
       <td>Leandro</td>
       <td>3023</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-25" data-setor="Secagem" data-resp="Nibson">
+    <tr data-date="2026-08-25" data-setor="Secagem" data-resp="Nibson" data-key="2026-08-25|Secagem|Nibson|27">
       <td>25/08</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -729,8 +794,10 @@
       <td>Nibson</td>
       <td>3003</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-25" data-setor="Destilaria" data-resp="Lucas">
+    <tr data-date="2026-08-25" data-setor="Destilaria" data-resp="Lucas" data-key="2026-08-25|Destilaria|Lucas|28">
       <td>25/08</td>
       <td>07:00–12:00, 13:00–18:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -739,8 +806,10 @@
       <td>Lucas</td>
       <td>2951</td>
       <td class="num">10h (5 itens)</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-25" data-setor="Destilaria" data-resp="Valter">
+    <tr data-date="2026-08-25" data-setor="Destilaria" data-resp="Valter" data-key="2026-08-25|Destilaria|Valter|29">
       <td>25/08</td>
       <td>07:00–12:00, 13:00–18:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -749,8 +818,10 @@
       <td>Valter</td>
       <td>2951</td>
       <td class="num">10h (5 itens)</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-        <tr data-date="2026-08-25" data-setor="Liquefacao" data-resp="Jadson">
+        <tr data-date="2026-08-25" data-setor="Liquefacao" data-resp="Jadson" data-key="2026-08-25|Liquefacao|Jadson|30">
       <td>25/08</td>
       <td>07:00–08:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -759,8 +830,10 @@
       <td>Jadson</td>
       <td>2929</td>
       <td class="num">1.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-25" data-setor="Moagem" data-resp="Jadson">
+    <tr data-date="2026-08-25" data-setor="Moagem" data-resp="Jadson" data-key="2026-08-25|Moagem|Jadson|31">
       <td>25/08</td>
       <td>08:00–12:00, 13:00–14:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -769,8 +842,10 @@
       <td>Jadson</td>
       <td>2944</td>
       <td class="num">5.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-25" data-setor="Caldeira" data-resp="Jadson">
+    <tr data-date="2026-08-25" data-setor="Caldeira" data-resp="Jadson" data-key="2026-08-25|Caldeira|Jadson|32">
       <td>25/08</td>
       <td>14:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -779,8 +854,10 @@
       <td>Jadson</td>
       <td>2936</td>
       <td class="num">5.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-25" data-setor="Toda Fabrica" data-resp="Marcio">
+    <tr data-date="2026-08-25" data-setor="Toda Fabrica" data-resp="Marcio" data-key="2026-08-25|Toda Fabrica|Marcio|33">
       <td>25/08</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -789,8 +866,10 @@
       <td>Marcio</td>
       <td>3112</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-26" data-setor="Fermentação" data-resp="Valter">
+    <tr data-date="2026-08-26" data-setor="Fermentação" data-resp="Valter" data-key="2026-08-26|Fermentação|Valter|34">
       <td>26/08</td>
       <td>07:00–12:00, 13:00–17:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -799,8 +878,10 @@
       <td>Valter</td>
       <td>2949</td>
       <td class="num">9h (5 itens)</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-26" data-setor="Evaporacao" data-resp="Edson">
+    <tr data-date="2026-08-26" data-setor="Evaporacao" data-resp="Edson" data-key="2026-08-26|Evaporacao|Edson|35">
       <td>26/08</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -809,8 +890,10 @@
       <td>Edson</td>
       <td>2934</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-26" data-setor="Torres" data-resp="Vanderley">
+    <tr data-date="2026-08-26" data-setor="Torres" data-resp="Vanderley" data-key="2026-08-26|Torres|Vanderley|36">
       <td>26/08</td>
       <td>13:00–17:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -819,8 +902,10 @@
       <td>Vanderley</td>
       <td>2931</td>
       <td class="num">4h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-26" data-setor="Caldeira" data-resp="Adriel">
+    <tr data-date="2026-08-26" data-setor="Caldeira" data-resp="Adriel" data-key="2026-08-26|Caldeira|Adriel|37">
       <td>26/08</td>
       <td>14:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -829,8 +914,10 @@
       <td>Adriel</td>
       <td>2937</td>
       <td class="num">5.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-26" data-setor="Secagem" data-resp="Nibson">
+    <tr data-date="2026-08-26" data-setor="Secagem" data-resp="Nibson" data-key="2026-08-26|Secagem|Nibson|38">
       <td>26/08</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -839,8 +926,10 @@
       <td>Nibson</td>
       <td>3003</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-26" data-setor="Toda Fabrica" data-resp="Vanderley">
+    <tr data-date="2026-08-26" data-setor="Toda Fabrica" data-resp="Vanderley" data-key="2026-08-26|Toda Fabrica|Vanderley|39">
       <td>26/08</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -849,8 +938,10 @@
       <td>Vanderley</td>
       <td>3024</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-26" data-setor="Toda Fabrica" data-resp="Marcio">
+    <tr data-date="2026-08-26" data-setor="Toda Fabrica" data-resp="Marcio" data-key="2026-08-26|Toda Fabrica|Marcio|40">
       <td>26/08</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -859,8 +950,10 @@
       <td>Marcio</td>
       <td>3112</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-26" data-setor="Secagem" data-resp="Leandro">
+    <tr data-date="2026-08-26" data-setor="Secagem" data-resp="Leandro" data-key="2026-08-26|Secagem|Leandro|41">
       <td>26/08</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -869,8 +962,10 @@
       <td>Leandro</td>
       <td>2935</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-27" data-setor="Cip" data-resp="Carlos">
+    <tr data-date="2026-08-27" data-setor="Cip" data-resp="Carlos" data-key="2026-08-27|Cip|Carlos|42">
       <td>27/08</td>
       <td>07:00–11:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -879,8 +974,10 @@
       <td>Carlos</td>
       <td>2938</td>
       <td class="num">4h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-27" data-setor="Caldeira" data-resp="Adriel">
+    <tr data-date="2026-08-27" data-setor="Caldeira" data-resp="Adriel" data-key="2026-08-27|Caldeira|Adriel|43">
       <td>27/08</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -889,8 +986,10 @@
       <td>Adriel</td>
       <td>2937</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-27" data-setor="Moagem" data-resp="Jadson">
+    <tr data-date="2026-08-27" data-setor="Moagem" data-resp="Jadson" data-key="2026-08-27|Moagem|Jadson|44">
       <td>27/08</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -899,8 +998,10 @@
       <td>Jadson</td>
       <td>2996</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-27" data-setor="Cip" data-resp="Nibson">
+    <tr data-date="2026-08-27" data-setor="Cip" data-resp="Nibson" data-key="2026-08-27|Cip|Nibson|45">
       <td>27/08</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -909,8 +1010,10 @@
       <td>Nibson</td>
       <td>3004</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-27" data-setor="Toda Fabrica" data-resp="Carlos">
+    <tr data-date="2026-08-27" data-setor="Toda Fabrica" data-resp="Carlos" data-key="2026-08-27|Toda Fabrica|Carlos|46">
       <td>27/08</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -919,8 +1022,10 @@
       <td>Carlos</td>
       <td>—</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-27" data-setor="Toda Fabrica" data-resp="Marcio">
+    <tr data-date="2026-08-27" data-setor="Toda Fabrica" data-resp="Marcio" data-key="2026-08-27|Toda Fabrica|Marcio|47">
       <td>27/08</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -929,8 +1034,10 @@
       <td>Marcio</td>
       <td>3112</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-27" data-setor="Secagem" data-resp="Leandro">
+    <tr data-date="2026-08-27" data-setor="Secagem" data-resp="Leandro" data-key="2026-08-27|Secagem|Leandro|48">
       <td>27/08</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -939,8 +1046,10 @@
       <td>Leandro</td>
       <td>2935</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-27" data-setor="Destilaria" data-resp="Edson">
+    <tr data-date="2026-08-27" data-setor="Destilaria" data-resp="Edson" data-key="2026-08-27|Destilaria|Edson|49">
       <td>27/08</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -949,8 +1058,10 @@
       <td>Edson</td>
       <td>2932</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-28" data-setor="Caldeira" data-resp="Jadson">
+    <tr data-date="2026-08-28" data-setor="Caldeira" data-resp="Jadson" data-key="2026-08-28|Caldeira|Jadson|50">
       <td>28/08</td>
       <td>07:00–12:00, 13:00–14:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -959,8 +1070,10 @@
       <td>Jadson</td>
       <td>2936</td>
       <td class="num">6.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-28" data-setor="Toda Fabrica" data-resp="Vanderley">
+    <tr data-date="2026-08-28" data-setor="Toda Fabrica" data-resp="Vanderley" data-key="2026-08-28|Toda Fabrica|Vanderley|51">
       <td>28/08</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -969,8 +1082,10 @@
       <td>Vanderley</td>
       <td>3024</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-28" data-setor="Toda Fabrica" data-resp="Marcio">
+    <tr data-date="2026-08-28" data-setor="Toda Fabrica" data-resp="Marcio" data-key="2026-08-28|Toda Fabrica|Marcio|52">
       <td>28/08</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -979,8 +1094,10 @@
       <td>Marcio</td>
       <td>3112</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-28" data-setor="Secagem" data-resp="Leandro">
+    <tr data-date="2026-08-28" data-setor="Secagem" data-resp="Leandro" data-key="2026-08-28|Secagem|Leandro|53">
       <td>28/08</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -989,8 +1106,10 @@
       <td>Leandro</td>
       <td>2935</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-29" data-setor="Caldeira" data-resp="Adriel">
+    <tr data-date="2026-08-29" data-setor="Caldeira" data-resp="Adriel" data-key="2026-08-29|Caldeira|Adriel|54">
       <td>29/08</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -999,8 +1118,10 @@
       <td>Adriel</td>
       <td>2937</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-29" data-setor="Toda Fabrica" data-resp="Vanderley">
+    <tr data-date="2026-08-29" data-setor="Toda Fabrica" data-resp="Vanderley" data-key="2026-08-29|Toda Fabrica|Vanderley|55">
       <td>29/08</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -1009,8 +1130,10 @@
       <td>Vanderley</td>
       <td>3024</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-29" data-setor="Toda Fabrica" data-resp="Carlos">
+    <tr data-date="2026-08-29" data-setor="Toda Fabrica" data-resp="Carlos" data-key="2026-08-29|Toda Fabrica|Carlos|56">
       <td>29/08</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -1019,8 +1142,10 @@
       <td>Carlos</td>
       <td>—</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-29" data-setor="Caldeira" data-resp="Jadson">
+    <tr data-date="2026-08-29" data-setor="Caldeira" data-resp="Jadson" data-key="2026-08-29|Caldeira|Jadson|57">
       <td>29/08</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -1029,8 +1154,10 @@
       <td>Jadson</td>
       <td>2936</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-        <tr data-date="2026-08-30" data-setor="Toda Fabrica" data-resp="Vanderley">
+        <tr data-date="2026-08-30" data-setor="Toda Fabrica" data-resp="Vanderley" data-key="2026-08-30|Toda Fabrica|Vanderley|58">
       <td>30/08</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -1039,8 +1166,10 @@
       <td>Vanderley</td>
       <td>3024</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-30" data-setor="Toda Fabrica" data-resp="Carlos">
+    <tr data-date="2026-08-30" data-setor="Toda Fabrica" data-resp="Carlos" data-key="2026-08-30|Toda Fabrica|Carlos|59">
       <td>30/08</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -1049,8 +1178,10 @@
       <td>Carlos</td>
       <td>—</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-30" data-setor="Toda Fabrica" data-resp="Leandro">
+    <tr data-date="2026-08-30" data-setor="Toda Fabrica" data-resp="Leandro" data-key="2026-08-30|Toda Fabrica|Leandro|60">
       <td>30/08</td>
       <td>19:00–07:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -1059,8 +1190,10 @@
       <td>Leandro</td>
       <td>3023</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-30" data-setor="Evaporacao" data-resp="Edson">
+    <tr data-date="2026-08-30" data-setor="Evaporacao" data-resp="Edson" data-key="2026-08-30|Evaporacao|Edson|61">
       <td>30/08</td>
       <td>07:00–12:00, 13:00–18:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -1069,8 +1202,10 @@
       <td>Edson</td>
       <td>2934</td>
       <td class="num">10.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-30" data-setor="Fabrica De Oleo" data-resp="Marcio">
+    <tr data-date="2026-08-30" data-setor="Fabrica De Oleo" data-resp="Marcio" data-key="2026-08-30|Fabrica De Oleo|Marcio|62">
       <td>30/08</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -1079,8 +1214,10 @@
       <td>Marcio</td>
       <td>2933</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-31" data-setor="Caldeira" data-resp="Adriel">
+    <tr data-date="2026-08-31" data-setor="Caldeira" data-resp="Adriel" data-key="2026-08-31|Caldeira|Adriel|63">
       <td>31/08</td>
       <td>07:00–12:00, 13:00–14:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -1089,8 +1226,10 @@
       <td>Adriel</td>
       <td>2937</td>
       <td class="num">6.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-31" data-setor="Toda Fabrica" data-resp="Carlos">
+    <tr data-date="2026-08-31" data-setor="Toda Fabrica" data-resp="Carlos" data-key="2026-08-31|Toda Fabrica|Carlos|64">
       <td>31/08</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -1099,8 +1238,10 @@
       <td>Carlos</td>
       <td>—</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-31" data-setor="Toda Fabrica" data-resp="Marcio">
+    <tr data-date="2026-08-31" data-setor="Toda Fabrica" data-resp="Marcio" data-key="2026-08-31|Toda Fabrica|Marcio|65">
       <td>31/08</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -1109,8 +1250,10 @@
       <td>Marcio</td>
       <td>3088</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-08-31" data-setor="Secagem" data-resp="Leandro">
+    <tr data-date="2026-08-31" data-setor="Secagem" data-resp="Leandro" data-key="2026-08-31|Secagem|Leandro|66">
       <td>31/08</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -1119,8 +1262,10 @@
       <td>Leandro</td>
       <td>2935</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-09-01" data-setor="Toda Fabrica" data-resp="Vanderley">
+    <tr data-date="2026-09-01" data-setor="Toda Fabrica" data-resp="Vanderley" data-key="2026-09-01|Toda Fabrica|Vanderley|67">
       <td>01/09</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -1129,8 +1274,10 @@
       <td>Vanderley</td>
       <td>3024</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-09-01" data-setor="Toda Fabrica" data-resp="Marcio">
+    <tr data-date="2026-09-01" data-setor="Toda Fabrica" data-resp="Marcio" data-key="2026-09-01|Toda Fabrica|Marcio|68">
       <td>01/09</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -1139,8 +1286,10 @@
       <td>Marcio</td>
       <td>3088</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-09-01" data-setor="Toda Fabrica" data-resp="Leandro">
+    <tr data-date="2026-09-01" data-setor="Toda Fabrica" data-resp="Leandro" data-key="2026-09-01|Toda Fabrica|Leandro|69">
       <td>01/09</td>
       <td>19:00–07:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -1149,8 +1298,10 @@
       <td>Leandro</td>
       <td>3023</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-09-02" data-setor="Liquefacao" data-resp="Valter">
+    <tr data-date="2026-09-02" data-setor="Liquefacao" data-resp="Valter" data-key="2026-09-02|Liquefacao|Valter|70">
       <td>02/09</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -1159,8 +1310,10 @@
       <td>Valter</td>
       <td>2997</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-09-02" data-setor="Toda Fabrica" data-resp="Carlos">
+    <tr data-date="2026-09-02" data-setor="Toda Fabrica" data-resp="Carlos" data-key="2026-09-02|Toda Fabrica|Carlos|71">
       <td>02/09</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -1169,8 +1322,10 @@
       <td>Carlos</td>
       <td>—</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-09-02" data-setor="Toda Fabrica" data-resp="Marcio">
+    <tr data-date="2026-09-02" data-setor="Toda Fabrica" data-resp="Marcio" data-key="2026-09-02|Toda Fabrica|Marcio|72">
       <td>02/09</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -1179,8 +1334,10 @@
       <td>Marcio</td>
       <td>3088</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-09-02" data-setor="Toda Fabrica" data-resp="Leandro">
+    <tr data-date="2026-09-02" data-setor="Toda Fabrica" data-resp="Leandro" data-key="2026-09-02|Toda Fabrica|Leandro|73">
       <td>02/09</td>
       <td>19:00–07:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -1189,8 +1346,10 @@
       <td>Leandro</td>
       <td>3023</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-09-03" data-setor="Evaporacao" data-resp="Lucas">
+    <tr data-date="2026-09-03" data-setor="Evaporacao" data-resp="Lucas" data-key="2026-09-03|Evaporacao|Lucas|74">
       <td>03/09</td>
       <td>07:00–12:30</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -1199,8 +1358,10 @@
       <td>Lucas</td>
       <td>2952</td>
       <td class="num">4.5h (3 itens)</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-09-03" data-setor="Evaporacao" data-resp="Valter">
+    <tr data-date="2026-09-03" data-setor="Evaporacao" data-resp="Valter" data-key="2026-09-03|Evaporacao|Valter|75">
       <td>03/09</td>
       <td>07:00–12:30</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -1209,8 +1370,10 @@
       <td>Valter</td>
       <td>2952</td>
       <td class="num">4.5h (3 itens)</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-09-03" data-setor="Toda Fabrica" data-resp="Vanderley">
+    <tr data-date="2026-09-03" data-setor="Toda Fabrica" data-resp="Vanderley" data-key="2026-09-03|Toda Fabrica|Vanderley|76">
       <td>03/09</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -1219,8 +1382,10 @@
       <td>Vanderley</td>
       <td>3024</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-09-03" data-setor="Toda Fabrica" data-resp="Marcio">
+    <tr data-date="2026-09-03" data-setor="Toda Fabrica" data-resp="Marcio" data-key="2026-09-03|Toda Fabrica|Marcio|77">
       <td>03/09</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -1229,8 +1394,10 @@
       <td>Marcio</td>
       <td>3088</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-09-03" data-setor="Toda Fabrica" data-resp="Leandro">
+    <tr data-date="2026-09-03" data-setor="Toda Fabrica" data-resp="Leandro" data-key="2026-09-03|Toda Fabrica|Leandro|78">
       <td>03/09</td>
       <td>19:00–07:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -1239,8 +1406,10 @@
       <td>Leandro</td>
       <td>3023</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-09-04" data-setor="Secagem" data-resp="Gianny">
+    <tr data-date="2026-09-04" data-setor="Secagem" data-resp="Gianny" data-key="2026-09-04|Secagem|Gianny|79">
       <td>04/09</td>
       <td>07:00–12:00, 13:00–16:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -1249,8 +1418,10 @@
       <td>Gianny</td>
       <td>2955</td>
       <td class="num">8h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-09-04" data-setor="Secagem" data-resp="Lucas">
+    <tr data-date="2026-09-04" data-setor="Secagem" data-resp="Lucas" data-key="2026-09-04|Secagem|Lucas|80">
       <td>04/09</td>
       <td>07:00–12:00, 13:00–16:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -1259,8 +1430,10 @@
       <td>Lucas</td>
       <td>2955</td>
       <td class="num">8h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-09-04" data-setor="Fabrica De Oleo" data-resp="Valter">
+    <tr data-date="2026-09-04" data-setor="Fabrica De Oleo" data-resp="Valter" data-key="2026-09-04|Fabrica De Oleo|Valter|81">
       <td>04/09</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -1269,8 +1442,10 @@
       <td>Valter</td>
       <td>3001</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-09-04" data-setor="Toda Fabrica" data-resp="Vanderley">
+    <tr data-date="2026-09-04" data-setor="Toda Fabrica" data-resp="Vanderley" data-key="2026-09-04|Toda Fabrica|Vanderley|82">
       <td>04/09</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -1279,8 +1454,10 @@
       <td>Vanderley</td>
       <td>3024</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-09-04" data-setor="Toda Fabrica" data-resp="Carlos">
+    <tr data-date="2026-09-04" data-setor="Toda Fabrica" data-resp="Carlos" data-key="2026-09-04|Toda Fabrica|Carlos|83">
       <td>04/09</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -1289,8 +1466,10 @@
       <td>Carlos</td>
       <td>—</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-09-05" data-setor="Destilaria" data-resp="Lucas">
+    <tr data-date="2026-09-05" data-setor="Destilaria" data-resp="Lucas" data-key="2026-09-05|Destilaria|Lucas|84">
       <td>05/09</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -1299,8 +1478,10 @@
       <td>Lucas</td>
       <td>3000</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-09-05" data-setor="Toda Fabrica" data-resp="Vanderley">
+    <tr data-date="2026-09-05" data-setor="Toda Fabrica" data-resp="Vanderley" data-key="2026-09-05|Toda Fabrica|Vanderley|85">
       <td>05/09</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -1309,8 +1490,10 @@
       <td>Vanderley</td>
       <td>3024</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-09-05" data-setor="Toda Fabrica" data-resp="Carlos">
+    <tr data-date="2026-09-05" data-setor="Toda Fabrica" data-resp="Carlos" data-key="2026-09-05|Toda Fabrica|Carlos|86">
       <td>05/09</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -1319,8 +1502,10 @@
       <td>Carlos</td>
       <td>—</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-09-05" data-setor="Toda Fabrica" data-resp="Leandro">
+    <tr data-date="2026-09-05" data-setor="Toda Fabrica" data-resp="Leandro" data-key="2026-09-05|Toda Fabrica|Leandro|87">
       <td>05/09</td>
       <td>19:00–07:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -1329,8 +1514,10 @@
       <td>Leandro</td>
       <td>3023</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-09-06" data-setor="Destilaria" data-resp="Lucas">
+    <tr data-date="2026-09-06" data-setor="Destilaria" data-resp="Lucas" data-key="2026-09-06|Destilaria|Lucas|88">
       <td>06/09</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -1339,8 +1526,10 @@
       <td>Lucas</td>
       <td>3000</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-09-06" data-setor="Toda Fabrica" data-resp="Carlos">
+    <tr data-date="2026-09-06" data-setor="Toda Fabrica" data-resp="Carlos" data-key="2026-09-06|Toda Fabrica|Carlos|89">
       <td>06/09</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -1349,8 +1538,10 @@
       <td>Carlos</td>
       <td>—</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-09-07" data-setor="Toda Fabrica" data-resp="Vanderley">
+    <tr data-date="2026-09-07" data-setor="Toda Fabrica" data-resp="Vanderley" data-key="2026-09-07|Toda Fabrica|Vanderley|90">
       <td>07/09</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -1359,8 +1550,10 @@
       <td>Vanderley</td>
       <td>3024</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-09-07" data-setor="Toda Fabrica" data-resp="Leandro">
+    <tr data-date="2026-09-07" data-setor="Toda Fabrica" data-resp="Leandro" data-key="2026-09-07|Toda Fabrica|Leandro|91">
       <td>07/09</td>
       <td>19:00–07:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -1369,8 +1562,10 @@
       <td>Leandro</td>
       <td>3023</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-09-08" data-setor="Caldeira" data-resp="Adriel">
+    <tr data-date="2026-09-08" data-setor="Caldeira" data-resp="Adriel" data-key="2026-09-08|Caldeira|Adriel|92">
       <td>08/09</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -1379,8 +1574,10 @@
       <td>Adriel</td>
       <td>2956</td>
       <td class="num">11h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-          <tr data-date="2026-09-08" data-setor="Toda Fabrica" data-resp="Carlos">
+          <tr data-date="2026-09-08" data-setor="Toda Fabrica" data-resp="Carlos" data-key="2026-09-08|Toda Fabrica|Carlos|93">
       <td>08/09</td>
       <td>07:00–12:00, 13:00–19:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -1389,8 +1586,10 @@
       <td>Carlos</td>
       <td>—</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
-    <tr data-date="2026-09-08" data-setor="Toda Fabrica" data-resp="Leandro">
+    <tr data-date="2026-09-08" data-setor="Toda Fabrica" data-resp="Leandro" data-key="2026-09-08|Toda Fabrica|Leandro|94">
       <td>08/09</td>
       <td>19:00–07:00</td>
       <td><span class="chip" style="background:var(--series-5);">D</span></td>
@@ -1399,6 +1598,8 @@
       <td>Leandro</td>
       <td>3023</td>
       <td class="num">11.0h</td>
+    
+      <td class="pt-done-cell"><input type="checkbox" class="pt-done-check" onchange="toggleDone(this)"></td>
     </tr>
 </tbody>
     </table>
@@ -1406,29 +1607,72 @@
   </div>
 
   <script>
+    var DONE_STORAGE_KEY = 'rrp-pt-done-v1';
+
+    function loadDoneState() {
+      try {
+        return JSON.parse(localStorage.getItem(DONE_STORAGE_KEY)) || {};
+      } catch (e) {
+        return {};
+      }
+    }
+    function saveDoneState(state) {
+      try {
+        localStorage.setItem(DONE_STORAGE_KEY, JSON.stringify(state));
+      } catch (e) {}
+    }
+    function applyDoneVisual(row, done) {
+      row.classList.toggle('pt-done', done);
+      var check = row.querySelector('.pt-done-check');
+      if (check) check.checked = done;
+    }
+    function toggleDone(checkbox) {
+      var row = checkbox.closest('tr');
+      var key = row.getAttribute('data-key');
+      var state = loadDoneState();
+      if (checkbox.checked) { state[key] = true; } else { delete state[key]; }
+      saveDoneState(state);
+      applyDoneVisual(row, checkbox.checked);
+      applyPtFilters();
+    }
+    function restoreDoneState() {
+      var state = loadDoneState();
+      document.querySelectorAll('#pt-table tbody tr').forEach(function(row) {
+        var key = row.getAttribute('data-key');
+        if (state[key]) applyDoneVisual(row, true);
+      });
+    }
+
     function applyPtFilters() {
       var dateVal = document.getElementById('f-date').value;
       var setorVal = document.getElementById('f-setor').value;
       var respVal = document.getElementById('f-resp').value;
+      var statusVal = document.getElementById('f-status').value;
       var rows = document.querySelectorAll('#pt-table tbody tr');
-      var visible = 0;
+      var visible = 0, doneCount = 0;
       rows.forEach(function(row) {
+        var isDone = row.classList.contains('pt-done');
+        if (isDone) doneCount++;
         var ok = (!dateVal || row.getAttribute('data-date') === dateVal) &&
                  (!setorVal || row.getAttribute('data-setor') === setorVal) &&
-                 (!respVal || row.getAttribute('data-resp') === respVal);
+                 (!respVal || row.getAttribute('data-resp') === respVal) &&
+                 (!statusVal || (statusVal === 'concluida') === isDone);
         row.style.display = ok ? '' : 'none';
         if (ok) visible++;
       });
       var total = rows.length;
       var countEl = document.getElementById('f-count');
-      countEl.textContent = (visible === total) ? (total + ' tarefas') : (visible + ' de ' + total + ' tarefas');
+      var label = (visible === total) ? (total + ' tarefas') : (visible + ' de ' + total + ' tarefas');
+      countEl.textContent = label + ' · ' + doneCount + ' concluída' + (doneCount === 1 ? '' : 's');
     }
     function clearPtFilters() {
       document.getElementById('f-date').value = '';
       document.getElementById('f-setor').value = '';
       document.getElementById('f-resp').value = '';
+      document.getElementById('f-status').value = '';
       applyPtFilters();
     }
+    restoreDoneState();
     applyPtFilters();
   </script>
 
