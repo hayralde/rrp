@@ -1677,7 +1677,7 @@
       });
 
       var W = 960, H = 380;
-      var marginLeft = 30, marginRight = 8, marginTop = 10, marginBottom = 86;
+      var marginLeft = 30, marginRight = 8, marginTop = 10, marginBottom = 100;
       var plotW = W - marginLeft - marginRight;
       var plotH = H - marginTop - marginBottom;
 
@@ -1722,10 +1722,13 @@
           var bh = y(0) - by;
           if (item.v > 0) {
             barsSvg += '<rect x="' + bx + '" y="' + by + '" width="' + barW + '" height="' + bh + '" fill="' + item.color + '"><title>' + setor + ' — ' + item.label + ': ' + item.v + '</title></rect>';
+            var valX = bx + barW / 2;
+            var valY = y(0) + 12;
+            labelsSvg += '<text x="' + valX + '" y="' + valY + '" font-size="10" fill="var(--text-secondary)" text-anchor="middle">' + item.v + '</text>';
           }
         });
         var labelX = marginLeft + idx * bandW + bandW / 2;
-        var labelY = y(0) + 14;
+        var labelY = y(0) + 28;
         labelsSvg += '<text x="' + labelX + '" y="' + labelY + '" font-size="11" fill="var(--text-secondary)" text-anchor="end" transform="rotate(-35 ' + labelX + ' ' + labelY + ')">' + setor + '</text>';
       });
 
