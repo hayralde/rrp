@@ -1705,7 +1705,9 @@
         return '<tr><td>' + o.label + '</td><td class="num">' + counts[o.key] + '</td></tr>';
       }).join('');
 
-      var W = 640, H = 260;
+      var container = document.getElementById('status-overview-chart');
+      var W = container.clientWidth > 40 ? container.clientWidth : 420;
+      var H = 260;
       var marginLeft = 30, marginRight = 8, marginTop = 10, marginBottom = 34;
       var plotW = W - marginLeft - marginRight;
       var plotH = H - marginTop - marginBottom;
@@ -1726,7 +1728,7 @@
 
       var n = order.length;
       var bandW = plotW / n;
-      var barW = bandW * 0.5;
+      var barW = bandW * 0.42;
       var barsSvg = '';
       order.forEach(function(o, idx) {
         var val = counts[o.key];
@@ -1741,8 +1743,8 @@
         barsSvg += '<text x="' + labelX + '" y="' + (y(0) + 28) + '" font-size="10.5" fill="var(--text-secondary)" text-anchor="middle">' + o.label + '</text>';
       });
 
-      var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%; min-width:420px; height:auto; display:block;">' + gridSvg + barsSvg + '</svg>';
-      document.getElementById('status-overview-chart').innerHTML = svg;
+      var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%; height:auto; display:block;">' + gridSvg + barsSvg + '</svg>';
+      container.innerHTML = svg;
     }
 
     function renderSetorStatusChart() {
@@ -1760,8 +1762,11 @@
         return totalB - totalA;
       });
 
-      var W = 960, H = 380;
-      var marginLeft = 30, marginRight = 8, marginTop = 10, marginBottom = 100;
+      var container = document.getElementById('setor-status-chart');
+      var W = container.clientWidth > 40 ? container.clientWidth : 900;
+      var H = 380;
+      var narrow = W < 700;
+      var marginLeft = 30, marginRight = 8, marginTop = 10, marginBottom = narrow ? 132 : 100;
       var plotW = W - marginLeft - marginRight;
       var plotH = H - marginTop - marginBottom;
 
@@ -1775,9 +1780,11 @@
 
       var n = setores.length || 1;
       var bandW = plotW / n;
-      var groupPad = bandW * 0.12;
-      var barGap = 2;
+      var groupPad = bandW * 0.08;
+      var barGap = 1;
       var barW = (bandW - groupPad * 2 - barGap * 2) / 3;
+      var labelAngle = narrow ? -90 : -35;
+      var labelFontSize = narrow ? 10 : 11;
 
       function y(v) { return marginTop + plotH - (v / yMax) * plotH; }
 
@@ -1813,11 +1820,11 @@
         });
         var labelX = marginLeft + idx * bandW + bandW / 2;
         var labelY = y(0) + 28;
-        labelsSvg += '<text x="' + labelX + '" y="' + labelY + '" font-size="11" fill="var(--text-secondary)" text-anchor="end" transform="rotate(-35 ' + labelX + ' ' + labelY + ')">' + setor + '</text>';
+        labelsSvg += '<text x="' + labelX + '" y="' + labelY + '" font-size="' + labelFontSize + '" fill="var(--text-secondary)" text-anchor="end" transform="rotate(' + labelAngle + ' ' + labelX + ' ' + labelY + ')">' + setor + '</text>';
       });
 
-      var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%; min-width:900px; height:auto; display:block;">' + gridSvg + barsSvg + labelsSvg + '</svg>';
-      document.getElementById('setor-status-chart').innerHTML = svg;
+      var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%; height:auto; display:block;">' + gridSvg + barsSvg + labelsSvg + '</svg>';
+      container.innerHTML = svg;
     }
 
     function applyPtFilters() {
@@ -1854,6 +1861,15 @@
     applyPtFilters();
     renderSetorStatusChart();
     renderStatusOverview();
+
+    var resizeTimer;
+    window.addEventListener('resize', function() {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(function() {
+        renderSetorStatusChart();
+        renderStatusOverview();
+      }, 150);
+    });
   </script>
 
   <footer>Prévia gerada a partir dos lotes de atividades recebidos na conversa · próximos lotes serão incorporados e este rascunho será atualizado · entregáveis finais: Excel (Gantt) + JSON de importação (site PCM).</footer>
