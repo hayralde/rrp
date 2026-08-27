@@ -174,6 +174,12 @@
   .status-table tr:last-child td { border-bottom: none; }
   .status-chart-wrap { flex: 1 1 420px; min-width: 280px; }
 
+  .os-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .os-card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+  .os-card .os-num { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .02em; }
+  .os-card .os-resp { font-size: 14.5px; font-weight: 600; margin: 3px 0 9px; }
+  .os-card .os-status { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; color: #fff; }
+
   footer { font-size: 12.5px; color: var(--text-muted); margin-top: 20px; }
 
   @media (max-width: 640px) {
@@ -474,6 +480,25 @@
       <div class="legend-item"><span class="legend-swatch" style="background:var(--warn-border)"></span>Em andamento</div>
       <div class="legend-item"><span class="legend-swatch" style="background:var(--series-1)"></span>Parada</div>
     </div>
+  </div>
+
+  <div class="panel">
+    <h2>OS por responsável</h2>
+    <div class="panel-sub">Um card por tarefa: responsável, número da OS e status atual.</div>
+    <div class="filter-bar">
+      <div class="filter-field">
+        <label for="os-card-status">Status</label>
+        <select id="os-card-status" onchange="renderOsCards()">
+          <option value="">Todas</option>
+          <option value="pendente">Pendentes</option>
+          <option value="andamento">Em Andamento</option>
+          <option value="concluida">Concluídas</option>
+          <option value="atrasada">Atrasadas</option>
+        </select>
+      </div>
+      <div class="filter-count" id="os-card-count"></div>
+    </div>
+    <div id="os-cards" class="os-card-grid"></div>
   </div>
 
   <div class="panel">
@@ -1684,6 +1709,7 @@
       renderSetorStatusChart();
       renderStatusOverview();
       renderSCurve();
+      renderOsCards();
     }
     function restoreStatusState() {
       var state = loadStatusState();
@@ -1865,6 +1891,43 @@
       container.innerHTML = svg;
     }
 
+    function renderOsCards() {
+      var rows = document.querySelectorAll('#pt-table tbody tr');
+      var now = new Date();
+      var todayIso = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+      var statusInfo = {
+        pendente: { label: 'Pendente', color: 'var(--series-1)' },
+        andamento: { label: 'Em Andamento', color: 'var(--warn-border)' },
+        concluida: { label: 'Concluída', color: 'var(--series-3)' },
+        atrasada: { label: 'Atrasada', color: 'var(--status-critical)' }
+      };
+      var filterVal = document.getElementById('os-card-status').value;
+
+      var cards = [];
+      rows.forEach(function(row) {
+        var statusKey;
+        if (row.classList.contains('pt-done')) { statusKey = 'concluida'; }
+        else if (row.classList.contains('pt-andamento')) { statusKey = 'andamento'; }
+        else { statusKey = row.getAttribute('data-date') < todayIso ? 'atrasada' : 'pendente'; }
+        if (filterVal && filterVal !== statusKey) return;
+        var os = row.querySelectorAll('td')[6].textContent.trim();
+        cards.push({ resp: row.getAttribute('data-resp'), os: os, statusKey: statusKey });
+      });
+
+      document.getElementById('os-cards').innerHTML = cards.map(function(c) {
+        var s = statusInfo[c.statusKey];
+        return '<div class="os-card">' +
+          '<div class="os-num">OS ' + c.os + '</div>' +
+          '<div class="os-resp">' + c.resp + '</div>' +
+          '<span class="os-status" style="background:' + s.color + ';">' + s.label + '</span>' +
+          '</div>';
+      }).join('');
+
+      var total = rows.length;
+      var countEl = document.getElementById('os-card-count');
+      countEl.textContent = (cards.length === total) ? (total + ' OS') : (cards.length + ' de ' + total + ' OS');
+    }
+
     function renderSetorStatusChart() {
       var rows = document.querySelectorAll('#pt-table tbody tr');
       var bySetor = {};
@@ -1980,6 +2043,7 @@
     renderSetorStatusChart();
     renderStatusOverview();
     renderSCurve();
+    renderOsCards();
 
     var resizeTimer;
     window.addEventListener('resize', function() {
