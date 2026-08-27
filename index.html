@@ -164,9 +164,7 @@
   .rank-val { font-size: 12px; text-align: right; font-variant-numeric: tabular-nums; color: var(--text-secondary); }
   .rank-note { font-size: 11.5px; color: var(--text-muted); margin-top: 10px; }
 
-  .setor-status-row { grid-template-columns: 130px 1fr 34px; }
-  .setor-status-track { display: flex; height: 12px; border-radius: 4px; overflow: hidden; background: var(--gridline); }
-  .setor-status-track > div { height: 100%; }
+  #setor-status-chart svg text { font-family: inherit; }
 
   footer { font-size: 11.5px; color: var(--text-muted); margin-top: 20px; }
 
@@ -182,7 +180,6 @@
     .filter-clear { flex: 1 1 auto; }
     .filter-count { margin-left: 0; flex: 1 1 100%; }
     .rank-row { grid-template-columns: 70px 1fr 40px; gap: 6px; }
-    .setor-status-row { grid-template-columns: 96px 1fr 30px; gap: 6px; }
   }
 </style>
 </head>
@@ -440,13 +437,13 @@
 
   <div class="panel">
     <h2>Tarefas pontuais por setor e status</h2>
-    <div class="panel-sub">Quantas tarefas de cada setor estão concluídas, em andamento ou paradas (ainda não iniciadas). Passe o mouse sobre um trecho da barra para ver o detalhe.</div>
-    <div class="legend">
+    <div class="panel-sub">Quantas tarefas de cada setor estão concluídas, em andamento ou paradas (ainda não iniciadas). Passe o mouse sobre uma barra para ver o detalhe.</div>
+    <div id="setor-status-chart" class="table-scroll"></div>
+    <div class="legend" style="justify-content:center; margin-bottom:0;">
       <div class="legend-item"><span class="legend-swatch" style="background:var(--series-3)"></span>Concluída</div>
       <div class="legend-item"><span class="legend-swatch" style="background:var(--warn-border)"></span>Em andamento</div>
       <div class="legend-item"><span class="legend-swatch" style="background:var(--series-1)"></span>Parada</div>
     </div>
-    <div id="setor-status-chart"></div>
   </div>
 
   <div class="panel">
@@ -1678,28 +1675,62 @@
         var totalB = bySetor[b].concluida + bySetor[b].andamento + bySetor[b].pendente;
         return totalB - totalA;
       });
-      var html = setores.map(function(setor) {
+
+      var W = 960, H = 380;
+      var marginLeft = 30, marginRight = 8, marginTop = 10, marginBottom = 86;
+      var plotW = W - marginLeft - marginRight;
+      var plotH = H - marginTop - marginBottom;
+
+      var maxVal = 0;
+      setores.forEach(function(s) {
+        var c = bySetor[s];
+        maxVal = Math.max(maxVal, c.concluida, c.andamento, c.pendente);
+      });
+      var step = maxVal <= 10 ? 2 : (maxVal <= 20 ? 4 : (maxVal <= 40 ? 5 : 10));
+      var yMax = Math.max(step, Math.ceil((maxVal || 1) / step) * step);
+
+      var n = setores.length || 1;
+      var bandW = plotW / n;
+      var groupPad = bandW * 0.12;
+      var barGap = 2;
+      var barW = (bandW - groupPad * 2 - barGap * 2) / 3;
+
+      function y(v) { return marginTop + plotH - (v / yMax) * plotH; }
+
+      var gridSvg = '';
+      var numTicks = yMax / step;
+      for (var i = 0; i <= numTicks; i++) {
+        var v = i * step;
+        var yy = y(v);
+        gridSvg += '<line x1="' + marginLeft + '" y1="' + yy + '" x2="' + (W - marginRight) + '" y2="' + yy + '" stroke="var(--gridline)" stroke-width="1" stroke-dasharray="3,3"/>';
+        gridSvg += '<text x="' + (marginLeft - 6) + '" y="' + (yy + 4) + '" text-anchor="end" font-size="11" fill="var(--text-muted)">' + v + '</text>';
+      }
+      gridSvg += '<line x1="' + marginLeft + '" y1="' + y(0) + '" x2="' + (W - marginRight) + '" y2="' + y(0) + '" stroke="var(--baseline)" stroke-width="1.5"/>';
+
+      var barsSvg = '', labelsSvg = '';
+      setores.forEach(function(setor, idx) {
         var c = bySetor[setor];
-        var total = c.concluida + c.andamento + c.pendente;
-        var parts = [
-          { n: c.concluida, color: 'var(--series-3)', label: 'concluída' },
-          { n: c.andamento, color: 'var(--warn-border)', label: 'em andamento' },
-          { n: c.pendente, color: 'var(--series-1)', label: 'parada' }
-        ].filter(function(p) { return p.n > 0; });
-        var segHtml = parts.map(function(p, i) {
-          var pct = total ? (p.n / total * 100) : 0;
-          var border = (i < parts.length - 1) ? 'border-right:2px solid var(--gridline);' : '';
-          var label = p.label;
-          if (p.n !== 1) { if (label === 'concluída') label = 'concluídas'; else if (label === 'parada') label = 'paradas'; }
-          return '<div style="flex:0 0 ' + pct + '%; background:' + p.color + ';' + border + '" title="' + setor + ': ' + p.n + ' ' + label + '"></div>';
-        }).join('');
-        return '<div class="rank-row setor-status-row">' +
-          '<div class="rank-name" title="' + setor + '">' + setor + '</div>' +
-          '<div class="setor-status-track">' + segHtml + '</div>' +
-          '<div class="rank-val">' + total + '</div>' +
-          '</div>';
-      }).join('');
-      document.getElementById('setor-status-chart').innerHTML = html;
+        var groupX = marginLeft + idx * bandW + groupPad;
+        var items = [
+          { v: c.concluida, color: 'var(--series-3)', label: 'concluída' },
+          { v: c.andamento, color: 'var(--warn-border)', label: 'em andamento' },
+          { v: c.pendente, color: 'var(--series-1)', label: 'parada' }
+        ];
+        items.forEach(function(item, bIdx) {
+          var bx = groupX + bIdx * (barW + barGap);
+          var by = y(item.v);
+          var bh = y(0) - by;
+          if (item.v > 0) {
+            barsSvg += '<rect x="' + bx + '" y="' + by + '" width="' + barW + '" height="' + bh + '" fill="' + item.color + '"><title>' + setor + ' — ' + item.label + ': ' + item.v + '</title></rect>';
+          }
+        });
+        var labelX = marginLeft + idx * bandW + bandW / 2;
+        var labelY = y(0) + 14;
+        labelsSvg += '<text x="' + labelX + '" y="' + labelY + '" font-size="11" fill="var(--text-secondary)" text-anchor="end" transform="rotate(-35 ' + labelX + ' ' + labelY + ')">' + setor + '</text>';
+      });
+
+      var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%; min-width:900px; height:auto; display:block;">' + gridSvg + barsSvg + labelsSvg + '</svg>';
+      document.getElementById('setor-status-chart').innerHTML = svg;
     }
 
     function applyPtFilters() {
