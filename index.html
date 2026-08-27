@@ -174,11 +174,14 @@
   .status-table tr:last-child td { border-bottom: none; }
   .status-chart-wrap { flex: 1 1 420px; min-width: 280px; }
 
-  .os-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
-  .os-card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
-  .os-card .os-num { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .02em; }
-  .os-card .os-resp { font-size: 14.5px; font-weight: 600; margin: 3px 0 9px; }
-  .os-card .os-status { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; color: #fff; }
+  .os-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; align-items: start; }
+  .os-card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
+  .os-card .os-resp { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+  .os-card .os-count { font-size: 11.5px; color: var(--text-muted); margin-bottom: 8px; }
+  .os-card .os-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--gridline); }
+  .os-card .os-item:last-child { border-bottom: none; }
+  .os-card .os-item-num { font-size: 12.5px; color: var(--text-secondary); }
+  .os-card .os-status { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 10.5px; font-weight: 700; color: #fff; white-space: nowrap; }
 
   footer { font-size: 12.5px; color: var(--text-muted); margin-top: 20px; }
 
@@ -484,7 +487,7 @@
 
   <div class="panel">
     <h2>OS por responsável</h2>
-    <div class="panel-sub">Um card por tarefa: responsável, número da OS e status atual.</div>
+    <div class="panel-sub">Um card por funcionário, com o número de cada OS sob sua responsabilidade e o status atual.</div>
     <div class="filter-bar">
       <div class="filter-field">
         <label for="os-card-status">Status</label>
@@ -1903,29 +1906,45 @@
       };
       var filterVal = document.getElementById('os-card-status').value;
 
-      var cards = [];
+      var byResp = {};
+      var total = rows.length;
+      var visibleItems = 0;
       rows.forEach(function(row) {
         var statusKey;
         if (row.classList.contains('pt-done')) { statusKey = 'concluida'; }
         else if (row.classList.contains('pt-andamento')) { statusKey = 'andamento'; }
         else { statusKey = row.getAttribute('data-date') < todayIso ? 'atrasada' : 'pendente'; }
-        if (filterVal && filterVal !== statusKey) return;
+        var resp = row.getAttribute('data-resp');
         var os = row.querySelectorAll('td')[6].textContent.trim();
-        cards.push({ resp: row.getAttribute('data-resp'), os: os, statusKey: statusKey });
+        if (!byResp[resp]) byResp[resp] = [];
+        byResp[resp].push({ os: os, statusKey: statusKey });
       });
 
-      document.getElementById('os-cards').innerHTML = cards.map(function(c) {
-        var s = statusInfo[c.statusKey];
+      var resps = Object.keys(byResp).sort();
+
+      var html = resps.map(function(resp) {
+        var items = byResp[resp];
+        var visible = filterVal ? items.filter(function(it) { return it.statusKey === filterVal; }) : items;
+        if (filterVal && !visible.length) return '';
+        visibleItems += visible.length;
+        var itemsHtml = visible.map(function(it) {
+          var s = statusInfo[it.statusKey];
+          return '<div class="os-item">' +
+            '<span class="os-item-num">OS ' + it.os + '</span>' +
+            '<span class="os-status" style="background:' + s.color + ';">' + s.label + '</span>' +
+            '</div>';
+        }).join('');
         return '<div class="os-card">' +
-          '<div class="os-num">OS ' + c.os + '</div>' +
-          '<div class="os-resp">' + c.resp + '</div>' +
-          '<span class="os-status" style="background:' + s.color + ';">' + s.label + '</span>' +
+          '<div class="os-resp">' + resp + '</div>' +
+          '<div class="os-count">' + items.length + ' tarefa' + (items.length === 1 ? '' : 's') + '</div>' +
+          itemsHtml +
           '</div>';
       }).join('');
 
-      var total = rows.length;
+      document.getElementById('os-cards').innerHTML = html;
+
       var countEl = document.getElementById('os-card-count');
-      countEl.textContent = (cards.length === total) ? (total + ' OS') : (cards.length + ' de ' + total + ' OS');
+      countEl.textContent = (!filterVal || visibleItems === total) ? (total + ' OS') : (visibleItems + ' de ' + total + ' OS');
     }
 
     function renderSetorStatusChart() {
