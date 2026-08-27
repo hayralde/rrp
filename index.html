@@ -444,6 +444,16 @@
   </div>
 
   <div class="panel">
+    <h2>Curva S do Projeto</h2>
+    <div class="panel-sub">Avanço acumulado (% das horas de tarefas pontuais) ao longo da janela. Planejado considera a data de cada tarefa; Realizado usa as tarefas já marcadas como concluídas, até hoje.</div>
+    <div id="scurve-chart" class="table-scroll"></div>
+    <div class="legend" style="justify-content:center; margin-bottom:0;">
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--series-1)"></span>Planejado</div>
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--series-3)"></span>Realizado</div>
+    </div>
+  </div>
+
+  <div class="panel">
     <h2>Distribuição por status</h2>
     <div class="panel-sub">Situação atual de todas as tarefas pontuais. "Atrasada" é calculada automaticamente: tarefa não concluída/em andamento cuja data já passou.</div>
     <div class="status-overview">
@@ -1673,6 +1683,7 @@
       applyPtFilters();
       renderSetorStatusChart();
       renderStatusOverview();
+      renderSCurve();
     }
     function restoreStatusState() {
       var state = loadStatusState();
@@ -1744,6 +1755,113 @@
       });
 
       var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%; height:auto; display:block;">' + gridSvg + barsSvg + '</svg>';
+      container.innerHTML = svg;
+    }
+
+    function renderSCurve() {
+      var rows = document.querySelectorAll('#pt-table tbody tr');
+      var startDate = new Date(2026, 7, 22);
+      var days = [];
+      for (var i = 0; i < 18; i++) {
+        var d = new Date(startDate);
+        d.setDate(startDate.getDate() + i);
+        var iso = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        var label = String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0');
+        days.push({ iso: iso, label: label });
+      }
+
+      var now = new Date();
+      var todayIso = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+
+      var taskData = [];
+      var total = 0;
+      rows.forEach(function(row) {
+        var cells = row.querySelectorAll('td');
+        var hoursText = cells[7] ? cells[7].textContent : '';
+        var hoursMatch = hoursText.match(/([\d.]+)/);
+        var hours = hoursMatch ? parseFloat(hoursMatch[1]) : 0;
+        total += hours;
+        taskData.push({ date: row.getAttribute('data-date'), hours: hours, done: row.classList.contains('pt-done') });
+      });
+
+      var plannedCum = [], actualCum = [];
+      var runningPlanned = 0, runningActual = 0;
+      days.forEach(function(day) {
+        taskData.forEach(function(t) {
+          if (t.date === day.iso) {
+            runningPlanned += t.hours;
+            if (t.done) runningActual += t.hours;
+          }
+        });
+        plannedCum.push(total ? (runningPlanned / total * 100) : 0);
+        actualCum.push(day.iso <= todayIso ? (total ? (runningActual / total * 100) : 0) : null);
+      });
+
+      var container = document.getElementById('scurve-chart');
+      var W = container.clientWidth > 40 ? container.clientWidth : 900;
+      var H = 340;
+      var narrow = W < 700;
+      var marginLeft = 34, marginRight = 16, marginTop = 16, marginBottom = narrow ? 80 : 60;
+      var plotW = W - marginLeft - marginRight;
+      var plotH = H - marginTop - marginBottom;
+      var n = days.length;
+      var stepX = n > 1 ? plotW / (n - 1) : plotW;
+
+      function x(i) { return marginLeft + i * stepX; }
+      function y(pct) { return marginTop + plotH - (pct / 100) * plotH; }
+
+      var gridSvg = '';
+      [0, 20, 40, 60, 80, 100].forEach(function(v) {
+        var yy = y(v);
+        gridSvg += '<line x1="' + marginLeft + '" y1="' + yy + '" x2="' + (W - marginRight) + '" y2="' + yy + '" stroke="var(--gridline)" stroke-width="1" stroke-dasharray="3,3"/>';
+        gridSvg += '<text x="' + (marginLeft - 6) + '" y="' + (yy + 4) + '" text-anchor="end" font-size="11.5" fill="var(--text-muted)">' + v + '%</text>';
+      });
+      gridSvg += '<line x1="' + marginLeft + '" y1="' + y(0) + '" x2="' + (W - marginRight) + '" y2="' + y(0) + '" stroke="var(--baseline)" stroke-width="1.5"/>';
+
+      var todayIdx = -1;
+      days.forEach(function(day, i) { if (day.iso === todayIso) todayIdx = i; });
+      var todaySvg = '';
+      if (todayIdx >= 0) {
+        var tx = x(todayIdx);
+        todaySvg += '<line x1="' + tx + '" y1="' + marginTop + '" x2="' + tx + '" y2="' + y(0) + '" stroke="var(--text-muted)" stroke-width="1" stroke-dasharray="2,2"/>';
+        todaySvg += '<text x="' + tx + '" y="' + (marginTop - 4) + '" font-size="10.5" fill="var(--text-muted)" text-anchor="middle">hoje</text>';
+      }
+
+      function buildPath(values) {
+        var pts = [];
+        values.forEach(function(v, i) {
+          if (v === null || v === undefined) return;
+          pts.push(x(i) + ',' + y(v));
+        });
+        return pts.length ? 'M' + pts.join(' L') : '';
+      }
+
+      var plannedPath = buildPath(plannedCum);
+      var actualPath = buildPath(actualCum);
+
+      var linesSvg = '';
+      if (plannedPath) linesSvg += '<path d="' + plannedPath + '" fill="none" stroke="var(--series-1)" stroke-width="2"/>';
+      if (actualPath) linesSvg += '<path d="' + actualPath + '" fill="none" stroke="var(--series-3)" stroke-width="2"/>';
+
+      var pointsSvg = '';
+      plannedCum.forEach(function(v, i) {
+        pointsSvg += '<circle cx="' + x(i) + '" cy="' + y(v) + '" r="2.5" fill="var(--series-1)"><title>' + days[i].label + ' — Planejado: ' + v.toFixed(1) + '%</title></circle>';
+      });
+      actualCum.forEach(function(v, i) {
+        if (v === null) return;
+        pointsSvg += '<circle cx="' + x(i) + '" cy="' + y(v) + '" r="2.5" fill="var(--series-3)"><title>' + days[i].label + ' — Realizado: ' + v.toFixed(1) + '%</title></circle>';
+      });
+
+      var labelAngle = narrow ? -90 : -45;
+      var labelFontSize = narrow ? 11 : 11.5;
+      var labelsSvg = '';
+      days.forEach(function(day, i) {
+        var lx = x(i);
+        var ly = y(0) + 16;
+        labelsSvg += '<text x="' + lx + '" y="' + ly + '" font-size="' + labelFontSize + '" fill="var(--text-secondary)" text-anchor="end" transform="rotate(' + labelAngle + ' ' + lx + ' ' + ly + ')">' + day.label + '</text>';
+      });
+
+      var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%; height:auto; display:block;">' + gridSvg + todaySvg + linesSvg + pointsSvg + labelsSvg + '</svg>';
       container.innerHTML = svg;
     }
 
@@ -1861,6 +1979,7 @@
     applyPtFilters();
     renderSetorStatusChart();
     renderStatusOverview();
+    renderSCurve();
 
     var resizeTimer;
     window.addEventListener('resize', function() {
@@ -1868,6 +1987,7 @@
       resizeTimer = setTimeout(function() {
         renderSetorStatusChart();
         renderStatusOverview();
+        renderSCurve();
       }, 150);
     });
   </script>
