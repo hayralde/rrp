@@ -1971,6 +1971,7 @@
       var bySetor = {};
       rows.forEach(function(row) {
         var setor = row.getAttribute('data-setor');
+        if (setor === 'Toda Fabrica') return;
         var status = row.classList.contains('pt-done') ? 'concluida' : (row.classList.contains('pt-andamento') ? 'andamento' : 'pendente');
         if (!bySetor[setor]) bySetor[setor] = { concluida: 0, andamento: 0, pendente: 0 };
         bySetor[setor][status]++;
