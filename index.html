@@ -175,7 +175,7 @@
   .status-table td { padding: 6px 10px; border-bottom: 1px solid var(--gridline); }
   .status-table tr:last-child td { border-bottom: none; }
   .status-chart-wrap { flex: 1 1 260px; min-width: 280px; }
-  .panel.setor-status-panel { max-width: max(calc(50% - 8px), 340px); }
+  .panel.half-width-panel { max-width: max(calc(50% - 8px), 340px); }
 
   .os-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; align-items: start; }
   .os-card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
@@ -506,7 +506,7 @@
     </div>
   </div>
 
-  <div class="panel setor-status-panel">
+  <div class="panel half-width-panel">
     <h2>Tarefas pontuais por setor e status</h2>
     <div class="panel-sub">Quantas tarefas de cada setor estão concluídas, em andamento ou paradas (ainda não iniciadas). Passe o mouse sobre uma barra para ver o detalhe.</div>
     <div id="setor-status-chart" class="table-scroll"></div>
@@ -536,7 +536,7 @@
     <div id="os-cards" class="os-card-grid"></div>
   </div>
 
-  <div class="panel">
+  <div class="panel half-width-panel">
     <h2>Lista de atividades</h2>
     <div class="panel-sub">Relação de todas as atividades por número de OS, com o percentual concluído de cada uma.</div>
     <div id="activity-list"></div>
@@ -1996,10 +1996,11 @@
       rows.forEach(function(row) {
         var done = row.classList.contains('pt-done');
         var os = row.querySelectorAll('td')[6].textContent.trim();
+        var setor = row.getAttribute('data-setor');
         var td = row.querySelectorAll('td')[4];
         var ul = td.querySelector('ul.task-list');
         var texts = ul ? [...ul.querySelectorAll('li')].map(function(li) { return li.textContent.trim(); }) : [td.textContent.trim()];
-        if (!groups[os]) { groups[os] = { total: 0, done: 0, descs: [] }; order.push(os); }
+        if (!groups[os]) { groups[os] = { total: 0, done: 0, descs: [], setor: setor }; order.push(os); }
         groups[os].total++;
         if (done) groups[os].done++;
         texts.forEach(function(text) {
@@ -2022,7 +2023,7 @@
         var barColor = pct === 100 ? 'var(--series-3)' : (pct > 0 ? 'var(--warn-border)' : 'var(--series-1)');
         var desc = g.descs.join('; ');
         return '<div class="activity-row">' +
-          '<div class="activity-name"><strong>OS ' + os + '</strong> — ' + desc + (g.total > 1 ? ' <span class="activity-count">(' + g.done + '/' + g.total + ')</span>' : '') + '</div>' +
+          '<div class="activity-name"><strong>OS ' + os + '</strong> [' + g.setor + '] — ' + desc + (g.total > 1 ? ' <span class="activity-count">(' + g.done + '/' + g.total + ')</span>' : '') + '</div>' +
           '<div class="activity-pct-wrap">' +
             '<div class="rank-bar-track activity-bar-track"><div class="rank-bar" style="width:' + pct + '%; background:' + barColor + ';"></div></div>' +
             '<span class="activity-pct">' + pct + '%</span>' +
