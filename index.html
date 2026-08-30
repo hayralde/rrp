@@ -1984,11 +1984,12 @@
 
       var container = document.getElementById('setor-status-chart');
       var W = container.clientWidth > 40 ? container.clientWidth : 900;
-      var H = 380;
-      var narrow = W < 700;
-      var marginLeft = 30, marginRight = 8, marginTop = 10, marginBottom = narrow ? 132 : 100;
+      var narrow = W < 500;
+      var marginLeft = narrow ? 88 : 130, marginRight = 34, marginTop = 10, marginBottom = 28;
+      var rowH = 52;
+      var n = setores.length || 1;
+      var H = marginTop + n * rowH + marginBottom;
       var plotW = W - marginLeft - marginRight;
-      var plotH = H - marginTop - marginBottom;
 
       var maxVal = 0;
       setores.forEach(function(s) {
@@ -1996,51 +1997,44 @@
         maxVal = Math.max(maxVal, c.concluida, c.andamento, c.pendente);
       });
       var step = maxVal <= 10 ? 2 : (maxVal <= 20 ? 4 : (maxVal <= 40 ? 5 : 10));
-      var yMax = Math.max(step, Math.ceil((maxVal || 1) / step) * step);
+      var xMax = Math.max(step, Math.ceil((maxVal || 1) / step) * step);
+      var labelFontSize = narrow ? 11 : 12.5;
 
-      var n = setores.length || 1;
-      var bandW = plotW / n;
-      var groupPad = bandW * 0.08;
-      var barGap = 1;
-      var barW = (bandW - groupPad * 2 - barGap * 2) / 3;
-      var labelAngle = narrow ? -90 : -35;
-      var labelFontSize = narrow ? 11 : 12;
+      function x(v) { return marginLeft + (v / xMax) * plotW; }
 
-      function y(v) { return marginTop + plotH - (v / yMax) * plotH; }
-
+      var plotBottom = marginTop + n * rowH;
       var gridSvg = '';
-      var numTicks = yMax / step;
+      var numTicks = xMax / step;
       for (var i = 0; i <= numTicks; i++) {
         var v = i * step;
-        var yy = y(v);
-        gridSvg += '<line x1="' + marginLeft + '" y1="' + yy + '" x2="' + (W - marginRight) + '" y2="' + yy + '" stroke="var(--gridline)" stroke-width="1" stroke-dasharray="3,3"/>';
-        gridSvg += '<text x="' + (marginLeft - 6) + '" y="' + (yy + 4) + '" text-anchor="end" font-size="12" fill="var(--text-muted)">' + v + '</text>';
+        var xx = x(v);
+        gridSvg += '<line x1="' + xx + '" y1="' + marginTop + '" x2="' + xx + '" y2="' + plotBottom + '" stroke="var(--gridline)" stroke-width="1" stroke-dasharray="3,3"/>';
+        gridSvg += '<text x="' + xx + '" y="' + (plotBottom + 18) + '" text-anchor="middle" font-size="' + labelFontSize + '" fill="var(--text-muted)">' + v + '</text>';
       }
-      gridSvg += '<line x1="' + marginLeft + '" y1="' + y(0) + '" x2="' + (W - marginRight) + '" y2="' + y(0) + '" stroke="var(--baseline)" stroke-width="1.5"/>';
+      gridSvg += '<line x1="' + marginLeft + '" y1="' + marginTop + '" x2="' + marginLeft + '" y2="' + plotBottom + '" stroke="var(--baseline)" stroke-width="1.5"/>';
 
+      var barH = 13, barGap = 2;
       var barsSvg = '', labelsSvg = '';
       setores.forEach(function(setor, idx) {
         var c = bySetor[setor];
-        var groupX = marginLeft + idx * bandW + groupPad;
+        var rowY = marginTop + idx * rowH;
+        var groupY = rowY + (rowH - (barH * 3 + barGap * 2)) / 2;
         var items = [
           { v: c.concluida, color: 'var(--series-3)', label: 'concluída' },
           { v: c.andamento, color: 'var(--warn-border)', label: 'em andamento' },
           { v: c.pendente, color: 'var(--series-1)', label: 'parada' }
         ];
         items.forEach(function(item, bIdx) {
-          var bx = groupX + bIdx * (barW + barGap);
-          var by = y(item.v);
-          var bh = y(0) - by;
+          var by = groupY + bIdx * (barH + barGap);
+          var bx = x(item.v);
+          var bw = bx - marginLeft;
           if (item.v > 0) {
-            barsSvg += '<rect x="' + bx + '" y="' + by + '" width="' + barW + '" height="' + bh + '" fill="' + item.color + '"><title>' + setor + ' — ' + item.label + ': ' + item.v + '</title></rect>';
-            var valX = bx + barW / 2;
-            var valY = y(0) + 12;
-            labelsSvg += '<text x="' + valX + '" y="' + valY + '" font-size="11" fill="var(--text-secondary)" text-anchor="middle">' + item.v + '</text>';
+            barsSvg += '<rect x="' + marginLeft + '" y="' + by + '" width="' + bw + '" height="' + barH + '" fill="' + item.color + '"><title>' + setor + ' — ' + item.label + ': ' + item.v + '</title></rect>';
+            labelsSvg += '<text x="' + (bx + 4) + '" y="' + (by + barH - 2.5) + '" font-size="' + (narrow ? 9.5 : 10.5) + '" fill="var(--text-secondary)" text-anchor="start">' + item.v + '</text>';
           }
         });
-        var labelX = marginLeft + idx * bandW + bandW / 2;
-        var labelY = y(0) + 28;
-        labelsSvg += '<text x="' + labelX + '" y="' + labelY + '" font-size="' + labelFontSize + '" fill="var(--text-secondary)" text-anchor="end" transform="rotate(' + labelAngle + ' ' + labelX + ' ' + labelY + ')">' + setor + '</text>';
+        var labelY = rowY + rowH / 2;
+        labelsSvg += '<text x="' + (marginLeft - 8) + '" y="' + (labelY + 4) + '" font-size="' + labelFontSize + '" fill="var(--text-secondary)" text-anchor="end">' + setor + '</text>';
       });
 
       var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%; height:auto; display:block;">' + gridSvg + barsSvg + labelsSvg + '</svg>';
