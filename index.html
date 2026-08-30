@@ -186,6 +186,14 @@
   .os-card .os-item-num { font-size: 12.5px; color: var(--text-secondary); }
   .os-card .os-status { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 10.5px; font-weight: 700; color: #fff; white-space: nowrap; }
 
+  .activity-row { display: flex; justify-content: space-between; align-items: center; gap: 14px; padding: 7px 0; border-bottom: 1px solid var(--gridline); }
+  .activity-row:last-child { border-bottom: none; }
+  .activity-name { font-size: 13px; flex: 1 1 auto; min-width: 0; }
+  .activity-count { color: var(--text-muted); font-size: 11.5px; }
+  .activity-pct-wrap { display: flex; align-items: center; gap: 8px; flex: 0 0 150px; }
+  .activity-bar-track { flex: 1; }
+  .activity-pct { font-size: 12.5px; font-variant-numeric: tabular-nums; color: var(--text-secondary); width: 36px; text-align: right; }
+
   footer { font-size: 12.5px; color: var(--text-muted); margin-top: 20px; }
 
   @media (max-width: 640px) {
@@ -526,6 +534,12 @@
       <div class="filter-count" id="os-card-count"></div>
     </div>
     <div id="os-cards" class="os-card-grid"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Lista de atividades</h2>
+    <div class="panel-sub">Relação de todas as atividades cadastradas com o percentual concluído de cada uma (atividades divididas em várias partes contam todas as partes).</div>
+    <div id="activity-list"></div>
   </div>
 
   <div class="panel">
@@ -1737,6 +1751,7 @@
       renderStatusOverview();
       renderSCurve();
       renderOsCards();
+      renderActivityList();
     }
     function restoreStatusState() {
       var state = loadStatusState();
@@ -1971,6 +1986,44 @@
       countEl.textContent = (!filterVal || visibleItems === total) ? (total + ' OS') : (visibleItems + ' de ' + total + ' OS');
     }
 
+    function renderActivityList() {
+      var rows = document.querySelectorAll('#pt-table tbody tr');
+      var groups = {};
+      var order = [];
+      function norm(text) {
+        return text.replace(/\s*\(parte\s*\d+\s*\/\s*\d+\)\s*$/i, '').trim();
+      }
+      rows.forEach(function(row) {
+        var done = row.classList.contains('pt-done');
+        var td = row.querySelectorAll('td')[4];
+        var ul = td.querySelector('ul.task-list');
+        var texts = ul ? [...ul.querySelectorAll('li')].map(function(li) { return li.textContent.trim(); }) : [td.textContent.trim()];
+        texts.forEach(function(text) {
+          var key = norm(text);
+          if (!groups[key]) { groups[key] = { total: 0, done: 0 }; order.push(key); }
+          groups[key].total++;
+          if (done) groups[key].done++;
+        });
+      });
+
+      order.sort(function(a, b) { return a.localeCompare(b, 'pt-BR'); });
+
+      var html = order.map(function(key) {
+        var g = groups[key];
+        var pct = Math.round(g.done / g.total * 100);
+        var barColor = pct === 100 ? 'var(--series-3)' : (pct > 0 ? 'var(--warn-border)' : 'var(--series-1)');
+        return '<div class="activity-row">' +
+          '<div class="activity-name">' + key + (g.total > 1 ? ' <span class="activity-count">(' + g.done + '/' + g.total + ' partes)</span>' : '') + '</div>' +
+          '<div class="activity-pct-wrap">' +
+            '<div class="rank-bar-track activity-bar-track"><div class="rank-bar" style="width:' + pct + '%; background:' + barColor + ';"></div></div>' +
+            '<span class="activity-pct">' + pct + '%</span>' +
+          '</div>' +
+          '</div>';
+      }).join('');
+
+      document.getElementById('activity-list').innerHTML = html;
+    }
+
     function renderSetorStatusChart() {
       var rows = document.querySelectorAll('#pt-table tbody tr');
       var bySetor = {};
@@ -2091,6 +2144,7 @@
     renderStatusOverview();
     renderSCurve();
     renderOsCards();
+    renderActivityList();
 
     var resizeTimer;
     window.addEventListener('resize', function() {
