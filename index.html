@@ -172,8 +172,7 @@
   .status-table th { background: var(--series-1); color: #fff; text-align: left; padding: 6px 10px; font-size: 12px; text-transform: uppercase; letter-spacing: .02em; }
   .status-table td { padding: 6px 10px; border-bottom: 1px solid var(--gridline); }
   .status-table tr:last-child td { border-bottom: none; }
-  .status-chart-wrap { flex: 0 1 460px; min-width: 280px; }
-  #scurve-chart { max-width: max(50%, 300px); }
+  .status-chart-wrap { flex: 1 1 260px; min-width: 280px; }
   #setor-status-chart { max-width: max(50%, 300px); }
 
   .os-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; align-items: start; }
@@ -473,25 +472,27 @@
     </div>
   </div>
 
-  <div class="panel">
-    <h2>Curva S do Projeto</h2>
-    <div class="panel-sub">Avanço acumulado (% das horas de tarefas pontuais) ao longo da janela. Planejado considera a data de cada tarefa; Realizado usa as tarefas já marcadas como concluídas, até hoje.</div>
-    <div id="scurve-chart" class="table-scroll"></div>
-    <div class="legend" style="justify-content:center; margin-bottom:0;">
-      <div class="legend-item"><span class="legend-swatch" style="background:var(--series-1)"></span>Planejado</div>
-      <div class="legend-item"><span class="legend-swatch" style="background:var(--series-3)"></span>Realizado</div>
+  <div class="indicator-row">
+    <div class="panel">
+      <h2>Curva S do Projeto</h2>
+      <div class="panel-sub">Avanço acumulado (% das horas de tarefas pontuais) ao longo da janela. Planejado considera a data de cada tarefa; Realizado usa as tarefas já marcadas como concluídas, até hoje.</div>
+      <div id="scurve-chart" class="table-scroll"></div>
+      <div class="legend" style="justify-content:center; margin-bottom:0;">
+        <div class="legend-item"><span class="legend-swatch" style="background:var(--series-1)"></span>Planejado</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:var(--series-3)"></span>Realizado</div>
+      </div>
     </div>
-  </div>
 
-  <div class="panel">
-    <h2>Distribuição por status</h2>
-    <div class="panel-sub">Situação atual de todas as tarefas pontuais. "Atrasada" é calculada automaticamente: tarefa não concluída/em andamento cuja data já passou.</div>
-    <div class="status-overview">
-      <table class="status-table">
-        <thead><tr><th>Status</th><th>Qtd</th></tr></thead>
-        <tbody id="status-overview-table"></tbody>
-      </table>
-      <div class="status-chart-wrap"><div id="status-overview-chart" class="table-scroll"></div></div>
+    <div class="panel">
+      <h2>Distribuição por status</h2>
+      <div class="panel-sub">Situação atual de todas as tarefas pontuais. "Atrasada" é calculada automaticamente: tarefa não concluída/em andamento cuja data já passou.</div>
+      <div class="status-overview">
+        <table class="status-table">
+          <thead><tr><th>Status</th><th>Qtd</th></tr></thead>
+          <tbody id="status-overview-table"></tbody>
+        </table>
+        <div class="status-chart-wrap"><div id="status-overview-chart" class="table-scroll"></div></div>
+      </div>
     </div>
   </div>
 
