@@ -73,6 +73,8 @@
   .legend { display: flex; gap: 16px; margin-bottom: 14px; flex-wrap: wrap; }
   .legend-item { display: flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--text-secondary); }
   .legend-swatch { width: 10px; height: 10px; border-radius: 3px; }
+  .legend-lg .legend-item { font-size: 15.5px; font-weight: 600; }
+  .legend-lg .legend-swatch { width: 13px; height: 13px; }
   .legend-swatch.folga { background: repeating-linear-gradient(45deg, var(--gridline), var(--gridline) 2px, var(--surface-1) 2px, var(--surface-1) 4px); border: 1px solid var(--baseline); }
   .legend-swatch.point { background: color-mix(in oklab, var(--series-1) 32%, var(--surface-1)); border: 1.5px solid var(--series-1); }
   .legend-swatch.free { background: var(--surface-1); border: 1px solid var(--gridline); }
@@ -173,7 +175,7 @@
   .status-table td { padding: 6px 10px; border-bottom: 1px solid var(--gridline); }
   .status-table tr:last-child td { border-bottom: none; }
   .status-chart-wrap { flex: 1 1 260px; min-width: 280px; }
-  #setor-status-chart { max-width: max(50%, 300px); }
+  .panel.setor-status-panel { max-width: max(calc(50% - 8px), 340px); }
 
   .os-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; align-items: start; }
   .os-card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
@@ -496,11 +498,11 @@
     </div>
   </div>
 
-  <div class="panel">
+  <div class="panel setor-status-panel">
     <h2>Tarefas pontuais por setor e status</h2>
     <div class="panel-sub">Quantas tarefas de cada setor estão concluídas, em andamento ou paradas (ainda não iniciadas). Passe o mouse sobre uma barra para ver o detalhe.</div>
     <div id="setor-status-chart" class="table-scroll"></div>
-    <div class="legend" style="justify-content:center; margin-bottom:0;">
+    <div class="legend legend-lg" style="justify-content:flex-end; margin-bottom:0;">
       <div class="legend-item"><span class="legend-swatch" style="background:var(--series-3)"></span>Concluída</div>
       <div class="legend-item"><span class="legend-swatch" style="background:var(--warn-border)"></span>Em andamento</div>
       <div class="legend-item"><span class="legend-swatch" style="background:var(--series-1)"></span>Parada</div>
@@ -2006,6 +2008,12 @@
       function x(v) { return marginLeft + (v / xMax) * plotW; }
 
       var plotBottom = marginTop + n * rowH;
+      var bandSvg = '';
+      setores.forEach(function(setor, idx) {
+        if (idx % 2 === 1) {
+          bandSvg += '<rect x="0" y="' + (marginTop + idx * rowH) + '" width="' + W + '" height="' + rowH + '" fill="color-mix(in oklab, var(--gridline) 45%, transparent)"/>';
+        }
+      });
       var gridSvg = '';
       var numTicks = xMax / step;
       for (var i = 0; i <= numTicks; i++) {
@@ -2040,7 +2048,7 @@
         labelsSvg += '<text x="' + (marginLeft - 8) + '" y="' + (labelY + 4) + '" font-size="' + labelFontSize + '" fill="var(--text-secondary)" text-anchor="end">' + setor + '</text>';
       });
 
-      var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%; height:auto; display:block;">' + gridSvg + barsSvg + labelsSvg + '</svg>';
+      var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%; height:auto; display:block;">' + bandSvg + gridSvg + barsSvg + labelsSvg + '</svg>';
       container.innerHTML = svg;
     }
 
