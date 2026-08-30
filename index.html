@@ -538,7 +538,7 @@
 
   <div class="panel">
     <h2>Lista de atividades</h2>
-    <div class="panel-sub">Relação de todas as atividades cadastradas com o percentual concluído de cada uma (atividades divididas em várias partes contam todas as partes).</div>
+    <div class="panel-sub">Relação de todas as atividades por número de OS, com o percentual concluído de cada uma.</div>
     <div id="activity-list"></div>
   </div>
 
@@ -1995,25 +1995,34 @@
       }
       rows.forEach(function(row) {
         var done = row.classList.contains('pt-done');
+        var os = row.querySelectorAll('td')[6].textContent.trim();
         var td = row.querySelectorAll('td')[4];
         var ul = td.querySelector('ul.task-list');
         var texts = ul ? [...ul.querySelectorAll('li')].map(function(li) { return li.textContent.trim(); }) : [td.textContent.trim()];
+        if (!groups[os]) { groups[os] = { total: 0, done: 0, descs: [] }; order.push(os); }
+        groups[os].total++;
+        if (done) groups[os].done++;
         texts.forEach(function(text) {
-          var key = norm(text);
-          if (!groups[key]) { groups[key] = { total: 0, done: 0 }; order.push(key); }
-          groups[key].total++;
-          if (done) groups[key].done++;
+          var d = norm(text);
+          if (groups[os].descs.indexOf(d) === -1) groups[os].descs.push(d);
         });
       });
 
-      order.sort(function(a, b) { return a.localeCompare(b, 'pt-BR'); });
+      order.sort(function(a, b) {
+        var na = parseInt(a, 10), nb = parseInt(b, 10);
+        if (isNaN(na) && isNaN(nb)) return a.localeCompare(b, 'pt-BR');
+        if (isNaN(na)) return 1;
+        if (isNaN(nb)) return -1;
+        return na - nb;
+      });
 
-      var html = order.map(function(key) {
-        var g = groups[key];
+      var html = order.map(function(os) {
+        var g = groups[os];
         var pct = Math.round(g.done / g.total * 100);
         var barColor = pct === 100 ? 'var(--series-3)' : (pct > 0 ? 'var(--warn-border)' : 'var(--series-1)');
+        var desc = g.descs.join('; ');
         return '<div class="activity-row">' +
-          '<div class="activity-name">' + key + (g.total > 1 ? ' <span class="activity-count">(' + g.done + '/' + g.total + ' partes)</span>' : '') + '</div>' +
+          '<div class="activity-name"><strong>OS ' + os + '</strong> — ' + desc + (g.total > 1 ? ' <span class="activity-count">(' + g.done + '/' + g.total + ')</span>' : '') + '</div>' +
           '<div class="activity-pct-wrap">' +
             '<div class="rank-bar-track activity-bar-track"><div class="rank-bar" style="width:' + pct + '%; background:' + barColor + ';"></div></div>' +
             '<span class="activity-pct">' + pct + '%</span>' +
