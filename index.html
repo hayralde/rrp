@@ -536,7 +536,7 @@
 
   <div class="panel half-width-panel">
     <h2>Atividades em atraso por responsável — Elétrica</h2>
-    <div class="panel-sub">Quantidade de tarefas pontuais atrasadas (não concluídas/em andamento e com data já passada) sob responsabilidade de cada funcionário, da maior para a menor quantidade.</div>
+    <div class="panel-sub">Quantidade de OS em atraso (não concluídas/em andamento e com data já passada) sob responsabilidade de cada funcionário, da maior para a menor quantidade.</div>
     <div id="overdue-chart" class="table-scroll"></div>
   </div>
 
@@ -2221,12 +2221,18 @@
       var rows = document.querySelectorAll('#pt-table tbody tr');
       var now = new Date();
       var todayIso = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
-      var byResp = {};
+      var byRespOs = {};
       rows.forEach(function(row) {
         if (row.classList.contains('pt-done') || row.classList.contains('pt-andamento')) return;
         if (row.getAttribute('data-date') >= todayIso) return;
         var resp = row.getAttribute('data-resp');
-        byResp[resp] = (byResp[resp] || 0) + 1;
+        var os = row.querySelectorAll('td')[6].textContent.trim();
+        if (!byRespOs[resp]) byRespOs[resp] = {};
+        byRespOs[resp][os] = true;
+      });
+      var byResp = {};
+      Object.keys(byRespOs).forEach(function(resp) {
+        byResp[resp] = Object.keys(byRespOs[resp]).length;
       });
       var resps = Object.keys(byResp).sort(function(a, b) { return byResp[b] - byResp[a]; });
 
@@ -2277,7 +2283,7 @@
         var by = rowY + (rowH - barH) / 2;
         var bx = x(val);
         var bw = bx - marginLeft;
-        barsSvg += '<rect x="' + marginLeft + '" y="' + by + '" width="' + bw + '" height="' + barH + '" fill="var(--status-critical)"><title>' + resp + ' — atrasadas: ' + val + '</title></rect>';
+        barsSvg += '<rect x="' + marginLeft + '" y="' + by + '" width="' + bw + '" height="' + barH + '" fill="var(--status-critical)"><title>' + resp + ' — OS em atraso: ' + val + '</title></rect>';
         labelsSvg += '<text x="' + (bx + 6) + '" y="' + (by + barH / 2 + 4) + '" font-size="' + (narrow ? 10.5 : 11.5) + '" fill="var(--text-secondary)" text-anchor="start">' + val + '</text>';
         var labelY = rowY + rowH / 2;
         labelsSvg += '<text x="' + (marginLeft - 8) + '" y="' + (labelY + 4) + '" font-size="' + labelFontSize + '" fill="var(--text-secondary)" text-anchor="end">' + resp + '</text>';
