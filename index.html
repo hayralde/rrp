@@ -2220,19 +2220,23 @@
       var now = new Date();
       var todayIso = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
       var byRespOs = {};
+      var allResps = {};
       rows.forEach(function(row) {
+        var resp = row.getAttribute('data-resp');
+        allResps[resp] = true;
         if (row.classList.contains('pt-done') || row.classList.contains('pt-andamento')) return;
         if (row.getAttribute('data-date') >= todayIso) return;
-        var resp = row.getAttribute('data-resp');
         var os = row.querySelectorAll('td')[6].textContent.trim();
         if (!byRespOs[resp]) byRespOs[resp] = {};
         byRespOs[resp][os] = true;
       });
       var byResp = {};
-      Object.keys(byRespOs).forEach(function(resp) {
-        byResp[resp] = Object.keys(byRespOs[resp]).length;
+      Object.keys(allResps).forEach(function(resp) {
+        byResp[resp] = byRespOs[resp] ? Object.keys(byRespOs[resp]).length : 0;
       });
-      var resps = Object.keys(byResp).sort(function(a, b) { return byResp[b] - byResp[a]; });
+      var resps = Object.keys(byResp).sort(function(a, b) {
+        return byResp[b] - byResp[a] || a.localeCompare(b, 'pt-BR');
+      });
 
       var container = document.getElementById('overdue-chart');
       var W = container.clientWidth > 40 ? container.clientWidth : 900;
