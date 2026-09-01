@@ -1809,6 +1809,29 @@
         body: JSON.stringify({ done: done, done_at: done ? new Date().toISOString() : null, updated_at: new Date().toISOString() })
       }).catch(function(e) { console.error('Falha ao sincronizar status com o Supabase', e); });
     }
+    var LEGACY_STATUS_KEY = 'rrp-pt-status-v1';
+    function migrateLegacyStatus() {
+      var legacy;
+      try { legacy = JSON.parse(localStorage.getItem(LEGACY_STATUS_KEY)) || {}; }
+      catch (e) { legacy = {}; }
+      var legacyKeys = Object.keys(legacy);
+      if (!legacyKeys.length) return;
+      var rows = document.querySelectorAll('#pt-table tbody tr');
+      var migrated = 0;
+      rows.forEach(function(row) {
+        var status = legacy[row.getAttribute('data-key')];
+        if (status !== 'concluida') return;
+        var taskId = row.getAttribute('data-task-id');
+        applyStatusVisual(row, 'concluida');
+        migrated++;
+        fetch(SUPABASE_TASKS + '?id=eq.' + taskId, {
+          method: 'PATCH',
+          headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ done: true, done_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+        }).catch(function(e) { console.error('Falha ao migrar status legado para o Supabase', e); });
+      });
+      if (migrated) refreshAllPanels();
+    }
     function restoreStatusState() {
       var andamento = loadAndamentoState();
       var rows = document.querySelectorAll('#pt-table tbody tr');
@@ -2304,6 +2327,7 @@
     renderOsCards();
     renderActivityList();
     renderOverdueChart();
+    migrateLegacyStatus();
     restoreStatusState();
 
     var resizeTimer;
