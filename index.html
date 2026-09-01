@@ -526,9 +526,9 @@
   </div>
 
   <div class="panel half-width-panel">
-    <h2>Atividades em atraso por responsável — Elétrica</h2>
-    <div class="panel-sub">Quantidade de OS em atraso (não concluídas/em andamento e com data já passada) sob responsabilidade de cada funcionário, da maior para a menor quantidade.</div>
-    <div id="overdue-chart" class="table-scroll"></div>
+    <h2>Atividades pendentes por responsável — Elétrica</h2>
+    <div class="panel-sub">Quantidade de OS ainda não concluídas (pendente ou em andamento), independente da data, sob responsabilidade de cada funcionário, da maior para a menor quantidade.</div>
+    <div id="pending-chart" class="table-scroll"></div>
   </div>
 
   <div class="panel">
@@ -1799,7 +1799,7 @@
       renderSCurve();
       renderOsCards();
       renderActivityList();
-      renderOverdueChart();
+      renderPendingChart();
     }
     function setStatus(select) {
       var row = select.closest('tr');
@@ -2239,17 +2239,14 @@
       container.innerHTML = svg;
     }
 
-    function renderOverdueChart() {
+    function renderPendingChart() {
       var rows = document.querySelectorAll('#pt-table tbody tr');
-      var now = new Date();
-      var todayIso = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
       var byRespOs = {};
       var allResps = {};
       rows.forEach(function(row) {
         var resp = row.getAttribute('data-resp');
         allResps[resp] = true;
-        if (row.classList.contains('pt-done') || row.classList.contains('pt-andamento')) return;
-        if (row.getAttribute('data-date') >= todayIso) return;
+        if (row.classList.contains('pt-done')) return;
         var os = row.querySelectorAll('td')[6].textContent.trim();
         if (!byRespOs[resp]) byRespOs[resp] = {};
         byRespOs[resp][os] = true;
@@ -2262,7 +2259,7 @@
         return byResp[b] - byResp[a] || a.localeCompare(b, 'pt-BR');
       });
 
-      var container = document.getElementById('overdue-chart');
+      var container = document.getElementById('pending-chart');
       var W = container.clientWidth > 40 ? container.clientWidth : 900;
       var narrow = W < 500;
       var marginLeft = narrow ? 88 : 130, marginRight = 34, marginTop = 10, marginBottom = 28;
@@ -2272,7 +2269,7 @@
       var plotW = W - marginLeft - marginRight;
 
       if (!resps.length) {
-        container.innerHTML = '<div style="padding:16px; color:var(--text-muted); font-size:13px;">Nenhuma atividade em atraso.</div>';
+        container.innerHTML = '<div style="padding:16px; color:var(--text-muted); font-size:13px;">Nenhuma atividade pendente.</div>';
         return;
       }
 
@@ -2309,7 +2306,7 @@
         var by = rowY + (rowH - barH) / 2;
         var bx = x(val);
         var bw = bx - marginLeft;
-        barsSvg += '<rect x="' + marginLeft + '" y="' + by + '" width="' + bw + '" height="' + barH + '" fill="var(--status-critical)"><title>' + resp + ' — OS em atraso: ' + val + '</title></rect>';
+        barsSvg += '<rect x="' + marginLeft + '" y="' + by + '" width="' + bw + '" height="' + barH + '" fill="var(--warn-border)"><title>' + resp + ' — OS pendentes: ' + val + '</title></rect>';
         labelsSvg += '<text x="' + (bx + 6) + '" y="' + (by + barH / 2 + 4) + '" font-size="' + (narrow ? 10.5 : 11.5) + '" fill="var(--text-secondary)" text-anchor="start">' + val + '</text>';
         var labelY = rowY + rowH / 2;
         labelsSvg += '<text x="' + (marginLeft - 8) + '" y="' + (labelY + 4) + '" font-size="' + labelFontSize + '" fill="var(--text-secondary)" text-anchor="end">' + resp + '</text>';
@@ -2358,7 +2355,7 @@
     renderSCurve();
     renderOsCards();
     renderActivityList();
-    renderOverdueChart();
+    renderPendingChart();
     migrateLegacyStatus();
     restoreStatusState();
 
@@ -2369,7 +2366,7 @@
         renderSetorStatusChart();
         renderStatusOverview();
         renderSCurve();
-        renderOverdueChart();
+        renderPendingChart();
       }, 150);
     });
   </script>
