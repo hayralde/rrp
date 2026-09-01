@@ -535,6 +535,12 @@
   </div>
 
   <div class="panel">
+    <h2>Atividades em atraso por responsável — Elétrica</h2>
+    <div class="panel-sub">Quantidade de tarefas pontuais atrasadas (não concluídas/em andamento e com data já passada) sob responsabilidade de cada funcionário, da maior para a menor quantidade.</div>
+    <div id="overdue-chart" class="table-scroll"></div>
+  </div>
+
+  <div class="panel">
     <h2>Tarefas pontuais já recebidas (por OS/atividade)</h2>
     <div class="panel-sub">Alocação automática (sem data pedida pelo usuário) — ordenadas por início. A coluna Turno usa a mesma cor do calendário acima. Lucas e Valter: atividades do mesmo dia e setor aparecem agrupadas numa única linha.</div>
     <div class="filter-bar">
@@ -1778,6 +1784,7 @@
       renderSCurve();
       renderOsCards();
       renderActivityList();
+      renderOverdueChart();
     }
     function setStatus(select) {
       var row = select.closest('tr');
@@ -2187,6 +2194,76 @@
       container.innerHTML = svg;
     }
 
+    function renderOverdueChart() {
+      var rows = document.querySelectorAll('#pt-table tbody tr');
+      var now = new Date();
+      var todayIso = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+      var byResp = {};
+      rows.forEach(function(row) {
+        if (row.classList.contains('pt-done') || row.classList.contains('pt-andamento')) return;
+        if (row.getAttribute('data-date') >= todayIso) return;
+        var resp = row.getAttribute('data-resp');
+        byResp[resp] = (byResp[resp] || 0) + 1;
+      });
+      var resps = Object.keys(byResp).sort(function(a, b) { return byResp[b] - byResp[a]; });
+
+      var container = document.getElementById('overdue-chart');
+      var W = container.clientWidth > 40 ? container.clientWidth : 900;
+      var narrow = W < 500;
+      var marginLeft = narrow ? 88 : 130, marginRight = 34, marginTop = 10, marginBottom = 28;
+      var rowH = 32;
+      var n = resps.length || 1;
+      var H = marginTop + n * rowH + marginBottom;
+      var plotW = W - marginLeft - marginRight;
+
+      if (!resps.length) {
+        container.innerHTML = '<div style="padding:16px; color:var(--text-muted); font-size:13px;">Nenhuma atividade em atraso.</div>';
+        return;
+      }
+
+      var maxVal = 0;
+      resps.forEach(function(r) { maxVal = Math.max(maxVal, byResp[r]); });
+      var step = maxVal <= 10 ? 1 : (maxVal <= 20 ? 2 : (maxVal <= 40 ? 5 : 10));
+      var xMax = Math.max(step, Math.ceil((maxVal || 1) / step) * step);
+      var labelFontSize = narrow ? 11 : 12.5;
+
+      function x(v) { return marginLeft + (v / xMax) * plotW; }
+
+      var plotBottom = marginTop + n * rowH;
+      var bandSvg = '';
+      resps.forEach(function(resp, idx) {
+        if (idx % 2 === 1) {
+          bandSvg += '<rect x="0" y="' + (marginTop + idx * rowH) + '" width="' + W + '" height="' + rowH + '" fill="color-mix(in oklab, var(--gridline) 45%, transparent)"/>';
+        }
+      });
+      var gridSvg = '';
+      var numTicks = xMax / step;
+      for (var i = 0; i <= numTicks; i++) {
+        var v = i * step;
+        var xx = x(v);
+        gridSvg += '<line x1="' + xx + '" y1="' + marginTop + '" x2="' + xx + '" y2="' + plotBottom + '" stroke="var(--gridline)" stroke-width="1" stroke-dasharray="3,3"/>';
+        gridSvg += '<text x="' + xx + '" y="' + (plotBottom + 18) + '" text-anchor="middle" font-size="' + labelFontSize + '" fill="var(--text-muted)">' + v + '</text>';
+      }
+      gridSvg += '<line x1="' + marginLeft + '" y1="' + marginTop + '" x2="' + marginLeft + '" y2="' + plotBottom + '" stroke="var(--baseline)" stroke-width="1.5"/>';
+
+      var barH = rowH * 0.55;
+      var barsSvg = '', labelsSvg = '';
+      resps.forEach(function(resp, idx) {
+        var val = byResp[resp];
+        var rowY = marginTop + idx * rowH;
+        var by = rowY + (rowH - barH) / 2;
+        var bx = x(val);
+        var bw = bx - marginLeft;
+        barsSvg += '<rect x="' + marginLeft + '" y="' + by + '" width="' + bw + '" height="' + barH + '" fill="var(--status-critical)"><title>' + resp + ' — atrasadas: ' + val + '</title></rect>';
+        labelsSvg += '<text x="' + (bx + 6) + '" y="' + (by + barH / 2 + 4) + '" font-size="' + (narrow ? 10.5 : 11.5) + '" fill="var(--text-secondary)" text-anchor="start">' + val + '</text>';
+        var labelY = rowY + rowH / 2;
+        labelsSvg += '<text x="' + (marginLeft - 8) + '" y="' + (labelY + 4) + '" font-size="' + labelFontSize + '" fill="var(--text-secondary)" text-anchor="end">' + resp + '</text>';
+      });
+
+      var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%; height:auto; display:block;">' + bandSvg + gridSvg + barsSvg + labelsSvg + '</svg>';
+      container.innerHTML = svg;
+    }
+
     function applyPtFilters() {
       var dateVal = document.getElementById('f-date').value;
       var setorVal = document.getElementById('f-setor').value;
@@ -2226,6 +2303,7 @@
     renderSCurve();
     renderOsCards();
     renderActivityList();
+    renderOverdueChart();
     restoreStatusState();
 
     var resizeTimer;
@@ -2235,6 +2313,7 @@
         renderSetorStatusChart();
         renderStatusOverview();
         renderSCurve();
+        renderOverdueChart();
       }, 150);
     });
   </script>
