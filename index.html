@@ -197,6 +197,9 @@
   .activity-bar-track { flex: 1; }
   .activity-pct { font-size: 12.5px; font-variant-numeric: tabular-nums; color: var(--text-secondary); width: 36px; text-align: right; }
 
+  .scurve-stats { display: flex; gap: 32px; margin-bottom: 14px; }
+  .scurve-stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); font-weight: 600; }
+  .scurve-stat-val { font-size: 27px; font-weight: 700; font-variant-numeric: tabular-nums; margin-top: 2px; }
   .scurve-status-row { display: flex; gap: 28px; flex-wrap: wrap; justify-content: center; padding-top: 14px; margin-top: 10px; border-top: 1px solid var(--gridline); }
   .scurve-status-item { display: flex; align-items: center; gap: 7px; font-size: 14px; color: var(--text-secondary); }
   .scurve-status-item strong { font-weight: 700; color: var(--text-primary); }
@@ -493,6 +496,16 @@
     <div class="panel">
       <h2>Curva S do Projeto — Elétrica</h2>
       <div class="panel-sub">Avanço acumulado (% das horas de tarefas pontuais) ao longo da janela. Planejado considera a data de cada tarefa; Realizado usa as tarefas já marcadas como concluídas, até hoje.</div>
+      <div class="scurve-stats">
+        <div class="scurve-stat">
+          <div class="scurve-stat-label">Planejado até hoje</div>
+          <div class="scurve-stat-val" id="scurve-planned-val" style="color:var(--series-1);">—</div>
+        </div>
+        <div class="scurve-stat">
+          <div class="scurve-stat-label">Real até hoje</div>
+          <div class="scurve-stat-val" id="scurve-real-val" style="color:var(--series-3);">—</div>
+        </div>
+      </div>
       <div id="scurve-chart" class="table-scroll"></div>
       <div class="legend" style="justify-content:center; margin-bottom:0;">
         <div class="legend-item"><span class="legend-swatch" style="background:var(--series-1)"></span>Planejado</div>
@@ -1971,6 +1984,16 @@
         plannedCum.push(total ? (runningPlanned / total * 100) : 0);
         actualCum.push(day.iso <= todayIso ? (total ? (runningActual / total * 100) : 0) : null);
       });
+
+      var todayPlannedIdx = 0;
+      days.forEach(function(day, i) { if (day.iso <= todayIso) todayPlannedIdx = i; });
+      var plannedTodayVal = plannedCum[todayPlannedIdx] || 0;
+      var actualTodayVal = 0;
+      for (var ai = actualCum.length - 1; ai >= 0; ai--) {
+        if (actualCum[ai] !== null) { actualTodayVal = actualCum[ai]; break; }
+      }
+      document.getElementById('scurve-planned-val').textContent = plannedTodayVal.toFixed(1) + '%';
+      document.getElementById('scurve-real-val').textContent = actualTodayVal.toFixed(1) + '%';
 
       var statusCounts = { pendente: 0, andamento: 0, concluida: 0, atrasada: 0 };
       rows.forEach(function(row) {
